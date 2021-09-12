@@ -1,0 +1,1 @@
+gunicorn --bind 127.0.0.1:50000  --timeout 10000 --reload --workers 4  app:app
