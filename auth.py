@@ -11,7 +11,7 @@ import utils
 profile = Blueprint('auth', __name__)
 
 
-@profile.route("/login",methods=["POST"])
+@profile.route("/app/login",methods=["POST"])
 def login():
 
     try:
@@ -32,8 +32,8 @@ def login():
             body = {"token":token}
             return utils.return_200_response(body)
         
-
-        return utils.return_401_error("Authorization Failed")
+        logger.error("Invalid authentication credentials")
+        return utils.return_401_error("Invalid email ID or password")
 
     except Exception as e:
 
@@ -46,7 +46,7 @@ def login():
 
 
 
-@profile.route("/signup",methods=["POST"])
+@profile.route("/app/signup",methods=["POST"])
 def signup():
 
     try:

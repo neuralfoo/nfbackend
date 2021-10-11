@@ -1,5 +1,13 @@
 from flask import Response
 import json
+import dbops
+
+def authenticate(token):
+
+    user = dbops.authenticate_user(token)
+
+    return user
+
 
 def check_params(params,dtypes,data):
 
@@ -13,6 +21,14 @@ def check_params(params,dtypes,data):
             return False
 
     return True
+
+
+def invalid_param_values(value,possible_values):
+
+    if value in possible_values:
+        return False 
+    else:
+        return True
 
 
 def return_200_response(body):

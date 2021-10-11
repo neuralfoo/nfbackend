@@ -18,11 +18,12 @@ def insert_user(name,email,password,signupdate,role="",parentemail=""):
     		"email":email, 
     		"password": password,
     		"role":role,
-    		"parentemail":parentemail,
-    		"signupdate":signupdate,
+    		"parentEmail":parentemail,
+    		"sigupDate":signupdate,
     		"auth":"",
     		"plan":"",
-    		"billingID":""
+    		"billingID":"",
+            "disabled":False
     		}
     try:
         r = users.insert_one(user)
@@ -71,6 +72,77 @@ def create_auth_token(email,password):
         return None
     
     return token
+
+
+def authenticate_user(token):
+
+    users = db["users"]
+    result = db.users.find_one({"auth":token})
+    if result:
+        return result['email']
+    return None
+
+
+def insert_testboard(apiName,apiType,apiEnvironment,apiHeader,
+    apiHttpMethod,apiEndpoint,apiRequestBody,apiResponseBody,
+    apiInputDataType,apiRequestBodyType,apiResponseBodyType,user):
+
+
+    creationTime = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+    
+    testboards = db["testboards"]
+    testboard = {
+            "apiName": apiName, 
+            "apiType": apiType, 
+            "apiEnvironment":apiEnvironment ,
+            "apiHttpMethod":apiHttpMethod ,
+            "apiEndpoint":apiEndpoint ,
+            "apiRequestBody":apiRequestBody ,
+            "apiResponseBody":apiResponseBody ,
+            "apiInputDataType":apiInputDataType ,
+            "apiRequestBodyType":apiRequestBodyType ,
+            "apiResponseBodyType":apiResponseBodyType ,
+            "apiHeader":apiHeader,
+            "apiCreationDate":creationTime,
+            "apiCreator":user
+            }
+    try:
+        r = testboards.insert_one(testboard)
+    except Exception as e:
+        logger.error("Error while inserting testboard into db. "+str(e))
+        return False
+
+    return str(r.inserted_id)
+
+
+def update_collection(collection,id,field,value):
+
+    coll = db[collection]
+    
+    query = { "_id": ObjectId(id) }
+    
+    entity = { "$set": { field : value } }
+
+    try:
+        r = coll.update_one(query,entity)
+    except Exception as e:
+        logger.error("Error while updating db. "+str(e))
+        return False
+    
+    return True
+
+
+def get_testboard(testboard_id):
+
+    testboards = db["testboards"]
+    details = db.testboards.find({"_id":ObjectId(testboard_id)})
+    details = list(details)
+    if len(details)>0:
+        return details[0]
+    return None
+
+
+
 
 
 
