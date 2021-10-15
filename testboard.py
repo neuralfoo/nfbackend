@@ -24,28 +24,15 @@ def create_testboard():
         data = request.json
         
         if utils.check_params(
-            {"apiName","apiType","apiEnvironment","apiHttpMethod",
-            "apiEndpoint","apiRequestBody","apiResponseBody","apiInputDataType",
-            "apiRequestBodyType","apiResponseBodyType"},[str]*10,data) == False:
+            {"apiName","apiType","apiEnvironment","apiRequests"},[str,str,str,list],data) == False:
             message = "Invalid params sent in request body for"+endpoint
             logger.error(message+":"+str(data))
             return utils.return_400_error(message)
 
-        if utils.check_params(
-            {"apiHeader"},[list],data) == False:
-            message = "Invalid api header sent in request body for"+endpoint
-            logger.error(message+":"+str(data))
-            return utils.return_400_error(message)
 
-        logger.info("Testboard creation attempt: "+str(data) + "by user "+user)
-        
         check_values_list = [
             ["apiType",g.api_types],
-            ["apiEnvironment",g.api_environments],
-            ["apiHttpMethod",g.api_methods],
-            ["apiInputDataType",g.api_input_data_types],
-            ["apiRequestBodyType",g.api_request_body_type],
-            ["apiResponseBodyType",g.api_response_body_type]
+            ["apiEnvironment",g.api_environments]
         ]
 
         for [param,possible_values] in check_values_list:
@@ -53,6 +40,31 @@ def create_testboard():
                 message = "Invalid value sent in "+param+" for "+endpoint
                 logger.error(message+":"+str(data[param]))
                 return utils.return_400_error(message)
+
+
+        for r in data["apiRequests"]:
+            if utils.check_params(
+                {"apiHttpMethod","apiEndpoint","apiRequestBody","apiResponseBody","apiInputDataType",
+                "apiRequestBodyType","apiResponseBodyType","apiHeader"},([str]*7)+[list],r) == False:
+                message = "Invalid params sent in request body for"+endpoint
+                logger.error(message+":"+str(data))
+                return utils.return_400_error(message)
+
+
+            check_values_list = [
+                ["apiHttpMethod",g.api_methods],
+                ["apiInputDataType",g.api_input_data_types],
+                ["apiRequestBodyType",g.api_request_body_type],
+                ["apiResponseBodyType",g.api_response_body_type]
+            ]
+
+            for [param,possible_values] in check_values_list:
+                if utils.invalid_param_values(r[param],possible_values):
+                    message = "Invalid value sent in "+param+" for "+endpoint
+                    logger.error(message+":"+str(r[param]))
+                    return utils.return_400_error(message)
+
+        logger.info("Testboard creation attempt: "+str(data) + "by user "+user)
 
 
         testboard_id,msg = functions.create_testboard(data,user)
@@ -93,29 +105,17 @@ def update_testboard():
 
         data = request.json
         
+
         if utils.check_params(
-            {"_id","apiName","apiType","apiEnvironment","apiHttpMethod",
-            "apiEndpoint","apiRequestBody","apiResponseBody","apiInputDataType",
-            "apiRequestBodyType","apiResponseBodyType"},[str]*10,data) == False:
+            {"testboardID","apiName","apiType","apiEnvironment","apiRequests"},[str,str,str,str,list],data) == False:
             message = "Invalid params sent in request body for"+endpoint
             logger.error(message+":"+str(data))
             return utils.return_400_error(message)
 
-        if utils.check_params(
-            {"apiHeader"},[list],data) == False:
-            message = "Invalid api header sent in request body for"+endpoint
-            logger.error(message+":"+str(data))
-            return utils.return_400_error(message)
 
-        logger.info("Testboard creation attempt: "+str(data) + "by user "+user)
-        
         check_values_list = [
             ["apiType",g.api_types],
-            ["apiEnvironment",g.api_environments],
-            ["apiHttpMethod",g.api_methods],
-            ["apiInputDataType",g.api_input_data_types],
-            ["apiRequestBodyType",g.api_request_body_type],
-            ["apiResponseBodyType",g.api_response_body_type]
+            ["apiEnvironment",g.api_environments]
         ]
 
         for [param,possible_values] in check_values_list:
@@ -123,6 +123,29 @@ def update_testboard():
                 message = "Invalid value sent in "+param+" for "+endpoint
                 logger.error(message+":"+str(data[param]))
                 return utils.return_400_error(message)
+
+
+        for r in data["apiRequests"]:
+            if utils.check_params(
+                {"apiHttpMethod","apiEndpoint","apiRequestBody","apiResponseBody","apiInputDataType",
+                "apiRequestBodyType","apiResponseBodyType","apiHeader"},([str]*8)+[list],r) == False:
+                message = "Invalid params sent in request body for"+endpoint
+                logger.error(message+":"+str(data))
+                return utils.return_400_error(message)
+
+
+            check_values_list = [
+                ["apiHttpMethod",g.api_methods],
+                ["apiInputDataType",g.api_input_data_types],
+                ["apiRequestBodyType",g.api_request_body_type],
+                ["apiResponseBodyType",g.api_response_body_type]
+            ]
+
+            for [param,possible_values] in check_values_list:
+                if utils.invalid_param_values(r[param],possible_values):
+                    message = "Invalid value sent in "+param+" for "+endpoint
+                    logger.error(message+":"+str(r[param]))
+                    return utils.return_400_error(message)
 
 
         testboard_id,msg = functions.update_testboard(data,user)
@@ -171,6 +194,42 @@ def get_testboard(testboard_id):
             return utils.return_400_error(message)            
 
         return utils.return_200_response({"message":msg,"status":200,"testboard":testboard_details})
+    
+        
+
+    except Exception as e:
+
+        message = "Unexpected error"
+        logger.error(message+":"+str(e))
+        traceback.print_exc()
+
+        return utils.return_400_error(message)
+
+
+
+@profile.route("/app/testboard/list",methods=["GET"])
+def get_testboard():
+
+    endpoint = "/app/testboard/list"
+
+    try:
+
+        user = utils.authenticate(request.headers.get('Authorization'))
+
+        if user is None:
+            logger.error("Invalid auth token sent for"+endpoint)
+            return utils.return_401_error("Session expired. Please login again.")
+
+        logger.info(f"Testboard LIST attempt: by user {user}")
+
+
+        testboard_list,msg = functions.list_testboard()
+        
+        if testboard_list is None:
+            message = "Unexpected error occurred."
+            return utils.return_400_error(message)            
+
+        return utils.return_200_response({"message":msg,"status":200,"testboards":testboard_list})
     
         
 

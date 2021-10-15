@@ -83,10 +83,7 @@ def authenticate_user(token):
     return None
 
 
-def insert_testboard(apiName,apiType,apiEnvironment,apiHeader,
-    apiHttpMethod,apiEndpoint,apiRequestBody,apiResponseBody,
-    apiInputDataType,apiRequestBodyType,apiResponseBodyType,user):
-
+def insert_testboard(apiName,apiType,apiEnvironment,user):
 
     creationTime = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
     
@@ -94,17 +91,15 @@ def insert_testboard(apiName,apiType,apiEnvironment,apiHeader,
     testboard = {
             "apiName": apiName, 
             "apiType": apiType, 
-            "apiEnvironment":apiEnvironment ,
-            "apiHttpMethod":apiHttpMethod ,
-            "apiEndpoint":apiEndpoint ,
-            "apiRequestBody":apiRequestBody ,
-            "apiResponseBody":apiResponseBody ,
-            "apiInputDataType":apiInputDataType ,
-            "apiRequestBodyType":apiRequestBodyType ,
-            "apiResponseBodyType":apiResponseBodyType ,
-            "apiHeader":apiHeader,
+            "apiEnvironment":apiEnvironment,
             "apiCreationDate":creationTime,
-            "apiCreator":user
+            "apiCreationDate":creationTime,
+            "apiStatus":"ready",
+            "apiLastRunOn":"-",
+            "apiRequests":[],
+            "apiCreator":user,
+            "apiCollaborators":[user],
+            "apiLastUpdatedBy":user
             }
     try:
         r = testboards.insert_one(testboard)
@@ -113,6 +108,49 @@ def insert_testboard(apiName,apiType,apiEnvironment,apiHeader,
         return False
 
     return str(r.inserted_id)
+
+def insert_request(testboardID,apiHeader,apiHttpMethod,apiEndpoint,apiRequestBody,
+    apiResponseBody,apiInputDataType,apiRequestBodyType,apiResponseBodyType):
+
+
+    creationTime = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+    
+    requests = db["requests"]
+    request = {
+            "testboardID":testboardID ,
+            "apiHttpMethod":apiHttpMethod ,
+            "apiEndpoint":apiEndpoint ,
+            "apiRequestBody":apiRequestBody ,
+            "apiResponseBody":apiResponseBody ,
+            "apiInputDataType":apiInputDataType ,
+            "apiRequestBodyType":apiRequestBodyType ,
+            "apiResponseBodyType":apiResponseBodyType ,
+            "apiHeader":apiHeader
+            }
+    try:
+        r = requests.insert_one(request)
+    except Exception as e:
+        logger.error("Error while inserting request into db. "+str(e))
+        return False
+
+    return str(r.inserted_id)
+
+
+def push_request_in_testboard(testboardID,requestID):
+
+    coll = db["testboards"]
+    
+    query = { "_id": ObjectId(testboardID) }
+    
+    entity = { "$push": { "apiRequests" : requestID } }
+
+    try:
+        r = coll.update(query,entity)
+    except Exception as e:
+        logger.error("Error while pushing request into testboard collection. "+str(e))
+        return False
+    
+    return True
 
 
 def update_collection(collection,id,field,value):
@@ -132,21 +170,40 @@ def update_collection(collection,id,field,value):
     return True
 
 
-def get_testboard(testboard_id):
+def get_testboard(testboardID):
 
     testboards = db["testboards"]
-    details = db.testboards.find({"_id":ObjectId(testboard_id)})
+    details = db.testboards.find({"_id":ObjectId(testboardID)})
     details = list(details)
     if len(details)>0:
         return details[0]
     return None
 
 
+def fetch_item(collection,field=None,value=None):
+
+    coll = db[collection]
+    rows = []
+
+    if field is None:
+        rows = coll.find({})
+    else:
+        rows = coll.find({field:value})
+
+    return list(rows)
 
 
 
+def fetch_item_with_projection(collection,projection,field=None,value=None):
 
+    coll = db[collection]
 
+    if field is None:
+        rows = coll.find({},projection)
+    else:
+        rows = coll.find({field:value},projection)
+
+    return list(rows)
 
 
 
