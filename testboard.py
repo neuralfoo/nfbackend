@@ -4,6 +4,9 @@ from loguru import logger
 import global_vars as g 
 import traceback 
 import utils
+from bson.objectid import ObjectId
+
+# import time
 
 profile = Blueprint('testboard', __name__)
 
@@ -15,24 +18,27 @@ def create_testboard():
 
     try:
 
-        user = utils.authenticate(request.headers.get('Authorization'))
-
-        if user is None:
+        #### request authentication ####
+        userID,organizationID = utils.authenticate(request.headers.get('Authorization'))
+        if userID is None:
             logger.error("Invalid auth token sent for"+endpoint)
             return utils.return_401_error("Session expired. Please login again.")
 
+
+        #### request body sanity checks ####
         data = request.json
         
         if utils.check_params(
-            {"apiName","apiType","apiEnvironment","apiRequests"},[str,str,str,list],data) == False:
-            message = "Invalid params sent in request body for"+endpoint
+            ["apiName","apiType","apiEnvironment","visibility","apiRequests"],([str]*4)+[list],data) == False:
+            message = "Invalid params sent in request body for "+endpoint
             logger.error(message+":"+str(data))
             return utils.return_400_error(message)
 
 
         check_values_list = [
             ["apiType",g.api_types],
-            ["apiEnvironment",g.api_environments]
+            ["apiEnvironment",g.api_environments],
+            ["visibility",g.api_visibility]
         ]
 
         for [param,possible_values] in check_values_list:
@@ -44,8 +50,8 @@ def create_testboard():
 
         for r in data["apiRequests"]:
             if utils.check_params(
-                {"apiHttpMethod","apiEndpoint","apiRequestBody","apiResponseBody","apiInputDataType",
-                "apiRequestBodyType","apiResponseBodyType","apiHeader"},([str]*7)+[list],r) == False:
+                ["apiHttpMethod","apiEndpoint","apiRequestBody","apiResponseBody","apiInputDataType",
+                "apiRequestBodyType","apiResponseBodyType","apiHeader"],([str]*7)+[list],r) == False:
                 message = "Invalid params sent in request body for"+endpoint
                 logger.error(message+":"+str(data))
                 return utils.return_400_error(message)
@@ -64,10 +70,13 @@ def create_testboard():
                     logger.error(message+":"+str(r[param]))
                     return utils.return_400_error(message)
 
-        logger.info("Testboard creation attempt: "+str(data) + "by user "+user)
+        #### sanity checks completed and we can now proceed to insert data into DB ####
 
 
-        testboard_id,msg = functions.create_testboard(data,user)
+        logger.info("Testboard CREATE attempt: "+str(data) + "by user "+userID)
+
+
+        testboard_id,msg = functions.create_testboard(data,userID,organizationID)
         
         if testboard_id is None:
             message = "Unexpected error occurred."
@@ -75,6 +84,8 @@ def create_testboard():
 
         if testboard_id == "":
             return utils.return_400_error(msg)            
+
+        logger.info("Testboard created successfully")
 
         return utils.return_200_response({"message":"success","status":200,"id":testboard_id})
     
@@ -97,25 +108,25 @@ def update_testboard():
 
     try:
 
-        user = utils.authenticate(request.headers.get('Authorization'))
+        userID,organizationID = utils.authenticate(request.headers.get('Authorization'))
 
-        if user is None:
+        if userID is None:
             logger.error("Invalid auth token sent for"+endpoint)
             return utils.return_401_error("Session expired. Please login again.")
 
         data = request.json
         
-
         if utils.check_params(
-            {"testboardID","apiName","apiType","apiEnvironment","apiRequests"},[str,str,str,str,list],data) == False:
-            message = "Invalid params sent in request body for"+endpoint
+            ["testboardID","apiName","apiType","apiEnvironment","visibility","apiRequests"],([str]*5)+[list],data) == False:
+            message = "Invalid params sent in request body for "+endpoint
             logger.error(message+":"+str(data))
             return utils.return_400_error(message)
 
 
         check_values_list = [
             ["apiType",g.api_types],
-            ["apiEnvironment",g.api_environments]
+            ["apiEnvironment",g.api_environments],
+            ["visibility",g.api_visibility]
         ]
 
         for [param,possible_values] in check_values_list:
@@ -127,8 +138,8 @@ def update_testboard():
 
         for r in data["apiRequests"]:
             if utils.check_params(
-                {"apiHttpMethod","apiEndpoint","apiRequestBody","apiResponseBody","apiInputDataType",
-                "apiRequestBodyType","apiResponseBodyType","apiHeader"},([str]*8)+[list],r) == False:
+                ["apiHttpMethod","apiEndpoint","apiRequestBody","apiResponseBody","apiInputDataType",
+                "apiRequestBodyType","apiResponseBodyType","apiHeader"],([str]*7)+[list],r) == False:
                 message = "Invalid params sent in request body for"+endpoint
                 logger.error(message+":"+str(data))
                 return utils.return_400_error(message)
@@ -148,16 +159,27 @@ def update_testboard():
                     return utils.return_400_error(message)
 
 
-        testboard_id,msg = functions.update_testboard(data,user)
+        testboardID = data["testboardID"]
+
+        access_granted,msg = utils.check_permissions("testboards",ObjectId(testboardID),userID)
+        if not access_granted:
+            logger.error("Invalid access rights for"+endpoint)
+            return utils.return_401_error("You do not have access priviliges for this page.")
+
+        logger.info("Testboard UPDATE attempt: "+str(data) + "by user "+userID)
+
+        testboardID,msg = functions.update_testboard(data,userID)
         
-        if testboard_id is None:
+        if testboardID is None:
             message = "Unexpected error occurred."
             return utils.return_400_error(message)
 
-        if testboard_id == "":
+        if testboardID == "":
             return utils.return_400_error(msg)            
 
-        return utils.return_200_response({"message":"success","status":200,"id":testboard_id})
+        logger.info("Testboard updated successfully")
+
+        return utils.return_200_response({"message":"success","status":200,"id":testboardID})
     
         
 
@@ -171,27 +193,31 @@ def update_testboard():
 
 
 
-@profile.route("/app/testboard/get/<testboard_id>",methods=["GET"])
-def get_testboard(testboard_id):
+@profile.route("/app/testboard/get/<testboardID>",methods=["GET"])
+def get_testboard(testboardID):
 
-    endpoint = "/app/testboard/get/<testboard_id>"
+    endpoint = "/app/testboard/get/<testboardID>"
 
     try:
 
-        user = utils.authenticate(request.headers.get('Authorization'))
+        userID,organizationID = utils.authenticate(request.headers.get('Authorization'))
 
-        if user is None:
+        if userID is None:
             logger.error("Invalid auth token sent for"+endpoint)
             return utils.return_401_error("Session expired. Please login again.")
 
-        logger.info("Testboard get attempt: "+testboard_id+" by user "+user)
+        logger.info("Testboard GET attempt: "+testboardID+" by user "+userID)
 
+        access_granted,msg = utils.check_permissions("testboards",ObjectId(testboardID),userID)
+        if not access_granted:
+            logger.error("Invalid access rights for"+endpoint)
+            return utils.return_401_error("You do not have access priviliges for this page.")
 
-        testboard_details,msg = functions.get_testboard(testboard_id)
+        testboard_details,msg = functions.get_testboard(testboardID)
         
         if testboard_details is None:
             message = "Unexpected error occurred."
-            return utils.return_400_error(message)            
+            return utils.return_400_error(message)
 
         return utils.return_200_response({"message":msg,"status":200,"testboard":testboard_details})
     
@@ -208,22 +234,23 @@ def get_testboard(testboard_id):
 
 
 @profile.route("/app/testboard/list",methods=["GET"])
-def get_testboard():
+def list_testboard():
+
 
     endpoint = "/app/testboard/list"
 
     try:
 
-        user = utils.authenticate(request.headers.get('Authorization'))
+        userID,organizationID = utils.authenticate(request.headers.get('Authorization'))
 
-        if user is None:
+        if userID is None:
             logger.error("Invalid auth token sent for"+endpoint)
             return utils.return_401_error("Session expired. Please login again.")
 
-        logger.info(f"Testboard LIST attempt: by user {user}")
+        logger.info(f"Testboard LIST attempt: by user {userID}")
 
 
-        testboard_list,msg = functions.list_testboard()
+        testboard_list,msg = functions.list_testboard(userID,organizationID)
         
         if testboard_list is None:
             message = "Unexpected error occurred."

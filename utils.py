@@ -1,23 +1,74 @@
 from flask import Response
 import json
 import dbops
+from loguru import logger
+
+
+def check_ownership(collection,collectionID,userID):
+
+    r = dbops.fetch_item_with_projection(collection,["creatorID"],field="_id",value=collectionID)
+
+    if len(r) == 0:
+        msg = "Collection ID is invalid"
+        logger.error(msg)
+        return False,msg
+
+    if userID == r[0]["creatorID"]:
+
+        msg = f'{userID} is owner of {collectionID} on {collection}'
+        logger.info(msg)
+        return True,msg
+
+    msg = f'{userID} is not owner of {collectionID} on {collection}'
+    logger.info(msg)
+
+    return False,msg
+
+
+def check_permissions(collection,collectionID,userID):
+
+    r = dbops.fetch_item_with_projection(collection,["collaboratorIDs","visibility"],field="_id",value=collectionID)
+
+    if len(r) == 0:
+        msg = "Collection ID is invalid"
+        logger.error(msg)
+        return False,msg
+
+
+
+    if (userID in r[0]["collaboratorIDs"]) or (r[0]["visibility"] == "public"):
+
+        msg = f'{userID} has valid permissions for {collectionID} on {collection}'
+        logger.info(msg)
+        return True,msg
+
+    msg = f'{userID} does not have valid permissions for {collectionID} on {collection}'
+    logger.error(msg)
+
+    return False,msg
+
 
 def authenticate(token):
 
-    user = dbops.authenticate_user(token)
+    userID = dbops.authenticate_user(token)
 
-    return user
+    if userID is None:
+        return None,None
+
+    organizationID = dbops.get_organization(userID)
+
+    return userID,organizationID
 
 
 def check_params(params,dtypes,data):
 
-    if data.keys() < params:
-
+    if all (k in data for k in params) == False:
         return False
 
     for p,d in zip(params,dtypes):
 
         if type(data[p]) != d:
+            print("Error in ",p,d)
             return False
 
     return True
