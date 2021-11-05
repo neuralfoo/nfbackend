@@ -6,6 +6,7 @@ import auth
 import testboard 
 import user 
 import organization
+import fs 
 
 app = Flask(__name__)
 
@@ -15,6 +16,7 @@ app.register_blueprint(auth.profile)
 app.register_blueprint(testboard.profile)
 app.register_blueprint(user.profile)
 app.register_blueprint(organization.profile)
+app.register_blueprint(fs.profile)
 
 
 

@@ -161,7 +161,9 @@ def list_testboard(userID,organizationID):
 
 			creator = dbops.fetch_user_details(testboard_list[i]["creatorID"])
 			if creator is not None:
-				testboard_list[i]["creator"] = creator["firstName"]				
+				testboard_list[i]["creator"] = creator["firstName"]
+			else:
+				testboard_list[i]["creator"] = "User deleted"				
 
 		return testboard_list,"success"
 	
