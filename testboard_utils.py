@@ -159,6 +159,10 @@ def list_testboard(userID,organizationID):
 			testboard_list[i]["key"] = i+1
 			testboard_list[i]["apiType"] = g.api_named_types[testboard_list[i]["apiType"]]
 
+			creator = dbops.fetch_user_details(testboard_list[i]["creatorID"])
+			if creator is not None:
+				testboard_list[i]["creator"] = creator["firstName"]				
+
 		return testboard_list,"success"
 	
 	except Exception as e:

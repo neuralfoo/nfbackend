@@ -13,12 +13,13 @@ db = myclient["neuralfoo"]
 '''
 db.users.createIndex( { "email": 1 }, { unique: true } )
 db.tokens.createIndex( { "token": 1 }, { unique: true } )
+db.organizations.createIndex( { "referralCode": 1 }, { unique: true } )
 '''
 
-def insert_user(firstName,lastName,email,password,signupdate,organization,role="",parentemail=""):
+def insert_user(firstName,lastName,email,password,signupdate,organizationID,role="",parentemail=""):
 
     try:
-        organizationID = insert_organization(organization)
+        
 
         users = db["users"]
         user = {
@@ -34,8 +35,6 @@ def insert_user(firstName,lastName,email,password,signupdate,organization,role="
         		}
         
         r = users.insert_one(user)
-        insert_plan(userID = str(r.inserted_id),plan = "free",billingID = "",billingDate = signupdate,amount = "0")
-        insert_token(userID = str(r.inserted_id),token = "")
 
     except Exception as e:
         logger.error("Error while inserting user into db "+str(e))
@@ -43,11 +42,12 @@ def insert_user(firstName,lastName,email,password,signupdate,organization,role="
 
     return str(r.inserted_id)
 
-def insert_plan(userID,plan,billingID,billingDate,amount):
+def insert_plan(userID,organizationID,plan,billingID,billingDate,amount):
 
     billings = db["billings"]
     bill = {
             "userID":userID,
+            "organizationID":organizationID,
             "plan":plan,
             "billingID":billingID,
             "billingDate":billingDate,
@@ -71,10 +71,14 @@ def insert_organization(organization):
     try:
         r = coll.insert_one(doc)
     except Exception as e:
-        logger.error("Error while inserting plan into db "+str(e))
+        logger.error("Error while inserting organization into db "+str(e))
         return False
 
-    return str(r.inserted_id)
+
+    organizationID = str(r.inserted_id)
+    generate_organization_referral_code(organizationID)
+
+    return organizationID
 
 def insert_token(userID,token):
 
@@ -130,12 +134,16 @@ def create_auth_token(email,password):
 
         users = db["users"]
         user = { "password": password, "email":email }
+        u = users.find_one(user,{"_id"})
 
         tokens = db["tokens"]
         newtoken = { "$set": { "token": token } }
 
-        u = users.find_one(user,{"_id"})
         r = tokens.update_one({"userID":str(u["_id"])},newtoken)
+
+        if r.modified_count == 0:
+            logger.error("token could not be updated, probably userid does not exist in tokens collection.")
+            return None
 
     except Exception as e:
         logger.error("Error while updating auth token into db "+str(e))
@@ -320,6 +328,106 @@ def list_testboards(userID,organizationID):
     return list(results)
     
 
+
+def fetch_user_details(userID):
+
+    coll = db["users"]
+
+    user = coll.find_one({"_id":ObjectId(userID)})    
+
+    return user
+
+
+def update_user_details(userID,field,value):
+
+    coll = db["users"]
+    
+    query = { "_id": ObjectId(userID) }
+    
+    entity = { "$set": { field : value } }
+
+    try:
+        r = coll.update_one(query,entity)
+    except Exception as e:
+        logger.error("Error while updating user collection "+str(e))
+        return False
+    
+    return True
+
+
+def fetch_organization_details(organizationID):
+
+    coll = db["organizations"]
+
+    org = coll.find_one({"_id":ObjectId(organizationID)})    
+
+    return org
+
+
+
+def generate_organization_referral_code(organizationID):
+
+    alphabet = string.ascii_letters + string.digits
+    code = ''.join(secrets.choice(alphabet) for i in range(32))
+
+    while ( check_if_exists("organizations","referralCode",code) ):
+        code = ''.join(secrets.choice(alphabet) for i in range(32))
+
+
+    coll = db["organizations"]
+    
+    query = { "_id": ObjectId(organizationID) }
+    
+    entity = { "$set": { "referralCode" : code } }
+
+    try:
+        r = coll.update_one(query,entity)
+    except Exception as e:
+        logger.error("Error while generating referral code for organization collection "+str(e))
+        traceback.print_exc()
+        return None
+    
+    return code
+
+
+def get_organization_referral_code(organizationID):
+    # get referral code from orgid
+
+    coll = db["organizations"]
+    
+    query = { "_id": ObjectId(organizationID) }
+    
+    try:
+        r = coll.find_one(query)
+    except Exception as e:
+        logger.error("Error while getting referral code from organization collection "+str(e))
+        traceback.print_exc()
+        return None,None
+
+    if r:
+        return r["referralCode"],r["organization"]
+
+    else:
+        return None,None
+
+def get_organization_from_referral_code(referralCode):
+    # get orgid form referral code
+
+    coll = db["organizations"]
+    
+    query = { "referralCode": referralCode }
+    
+    try:
+        r = coll.find_one(query)
+    except Exception as e:
+        logger.error("Error while getting referral code from organization collection "+str(e))
+        traceback.print_exc()
+        return None
+    
+    if r:
+        return str(r["_id"])
+    else:
+        return None
 
 def fetch_item(collection,field=None,value=None):
 

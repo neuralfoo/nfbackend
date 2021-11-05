@@ -7,7 +7,6 @@ import traceback
 import datetime 
 import utils
 
-import time 
 
 profile = Blueprint('auth', __name__)
 
@@ -50,7 +49,6 @@ def validate_token():
 
     try:
 
-        # time.sleep(5)
 
         data = request.json
 
@@ -89,7 +87,7 @@ def signup():
 
         data = request.json
 
-        if utils.check_params(["email","password","firstName","lastName","organization"],[str,str,str,str,str],data) == False:
+        if utils.check_params(["email","password","firstName","lastName","organization","referral"],[str,str,str,str,str,bool],data) == False:
             message = "Invalid params sent in request body"
             logger.error(message+":"+str(data))
             return utils.return_400_error(message)
@@ -104,11 +102,48 @@ def signup():
             logger.error(message+str(data))
             return utils.return_400_error(message)
 
-
         signupdatetime = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
-        userid = dbops.insert_user(data["firstName"],data["lastName"],data["email"],data["password"],signupdatetime,data["organization"],role="admin",parentemail="")
-        
-        body = {"userID":str(userid)}
+
+        if data["referral"] == True:
+
+            # in case of referral is true, referral code is sent in data["organization"]
+
+            organizationID = dbops.get_organization_from_referral_code(data["organization"])
+
+            if organizationID is None:
+                message = "Onboarding link is invalid"
+                logger.error(message+str(data))
+                return utils.return_400_error(message)                
+
+            userID = dbops.insert_user(
+                data["firstName"],
+                data["lastName"],
+                data["email"],
+                data["password"],
+                signupdatetime,
+                organizationID,
+                role="tester")
+
+            dbops.insert_token(userID = userID, token = "")
+
+        elif data["referral"] == False:
+            
+            organizationID = dbops.insert_organization(data["organization"])
+
+            userID = dbops.insert_user(
+                data["firstName"],
+                data["lastName"],
+                data["email"],
+                data["password"],
+                signupdatetime,
+                organizationID,
+                role="admin")
+            
+            dbops.insert_plan(userID = userID, organizationID = organizationID, plan = "free",billingID = "",billingDate = signupdatetime,amount = "0")
+            dbops.insert_token(userID = userID, token = "")
+
+        token = dbops.create_auth_token(data["email"],data["password"])       
+        body = {"token":str(token)}
 
         return utils.return_200_response(body)
 

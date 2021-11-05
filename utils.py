@@ -57,6 +57,10 @@ def authenticate(token):
 
     organizationID = dbops.get_organization(userID)
 
+    if organizationID is None:
+        logger.error("UserID exists but OrganizationID is deleted.")
+        return None,None
+
     return userID,organizationID
 
 
