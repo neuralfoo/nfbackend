@@ -14,6 +14,7 @@ db = myclient["neuralfoo"]
 db.users.createIndex( { "email": 1 }, { unique: true } )
 db.tokens.createIndex( { "token": 1 }, { unique: true } )
 db.organizations.createIndex( { "referralCode": 1 }, { unique: true } )
+db.images.createIndex( { "imageHash": 1, "testboardID":1 }, { unique: true } )
 '''
 
 def insert_user(firstName,lastName,email,password,signupdate,organizationID,role="",parentemail=""):
@@ -456,7 +457,83 @@ def fetch_item_with_projection(collection,projection,field=None,value=None):
 
 
 
+def insert_image(filename,testboardID,imageUrl,fileSize,imageHeight,imageWidth,imageHash,imageOcr,annotation,fileType,creatorID):
+
+    creationTime = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+
+    images = db["images"]
+
+    entry = {"filename":filename,
+        "testboardID":testboardID,
+        "imageUrl":imageUrl,
+        "fileSize":fileSize,
+        "imageHeight":imageHeight,
+        "imageWidth":imageWidth,
+        "imageHash":imageHash,
+        "imageOcr":imageOcr,
+        "annotation":annotation,
+        "uploadTime":creationTime,
+        "fileType":fileType,
+        "creatorID":creatorID
+        }
+    try:
+        r = images.insert_one(entry)
+    except Exception as e:
+        logger.error("Error while inserting image into db. "+str(e))
+        return None
+
+    return str(r.inserted_id)
+
+def update_image_details(imageID,field,value):
+
+    coll = db["images"]
+    
+    query = { "_id": ObjectId(imageID) }
+    
+    entity = { "$set": { field : value } }
+
+    try:
+        r = coll.update_one(query,entity)
+    except Exception as e:
+        logger.error("Error while updating image collection "+str(e))
+        return False
+    
+    return True
 
 
+def get_image_details(imageID):
+
+    coll = db["images"]
+    
+    query = { "_id": ObjectId(imageID) }
+    
+    try:
+        r = coll.find_one(query)
+    except Exception as e:
+        logger.error("Error while getting image details "+str(e))
+        traceback.print_exc()
+        return None
+    
+    if r:
+        return r
+    else:
+        return None
+
+
+def get_images_for_testboard(testboardID):
+
+    
+    coll = db["images"]
+    
+    query = { "testboardID": testboardID }
+    
+    try:
+        r = coll.find(query)
+    except Exception as e:
+        logger.error(f"Error while getting images attached to testboardID {testboardID} "+str(e))
+        traceback.print_exc()
+        return []
+    
+    return list(r)
 
 

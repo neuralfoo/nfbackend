@@ -267,3 +267,46 @@ def list_testboard():
         traceback.print_exc()
 
         return utils.return_400_error(message)
+
+
+
+
+
+@profile.route("/app/testboard/testFiles",methods=["POST"])
+def get_test_files():
+
+    endpoint = "/app/testboard/testFiles"
+
+    try:
+
+        userID,organizationID = utils.authenticate(request.headers.get('Authorization'))
+
+        if userID is None:
+            logger.error("Invalid auth token sent for"+endpoint)
+            return utils.return_401_error("Session expired. Please login again.")
+
+        logger.info(f"Testboard LIST test images attempt by user {userID}")
+
+        data = request.json
+
+        if utils.check_params(["testboardID"],[str],data) == False:
+            message = "Invalid params sent in request body for "+endpoint
+            logger.error(message+":"+str(data))
+            return utils.return_400_error(message)
+
+        file_list,msg = functions.get_test_files(data["testboardID"])
+        
+        if file_list is None:
+            logger.error(msg)
+            return utils.return_400_error(msg)
+
+        return utils.return_200_response({"message":msg,"status":200,"files":file_list})
+
+
+    except Exception as e:
+
+        message = "Unexpected error"
+        logger.error(message+":"+str(e))
+        traceback.print_exc()
+
+        return utils.return_400_error(message)

@@ -119,6 +119,12 @@ def return_401_error(message):
 
     return error_response
 
+def return_404_error():
+
+    error_response = Response(status=404)
+
+    return error_response
+
 # def return_422_error(message):
 
 #   error_body = {"message":message}
