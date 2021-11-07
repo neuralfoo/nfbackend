@@ -163,8 +163,8 @@ def update_testboard():
 
         access_granted,msg = utils.check_permissions("testboards",ObjectId(testboardID),userID)
         if not access_granted:
-            logger.error("Invalid access rights for"+endpoint)
-            return utils.return_401_error("You do not have access priviliges for this page.")
+            logger.error("Invalid access rights for "+endpoint)
+            return utils.return_403_error("You do not have access priviliges for this page.")
 
         logger.info("Testboard UPDATE attempt: "+str(data) + "by user "+userID)
 
@@ -210,8 +210,8 @@ def get_testboard(testboardID):
 
         access_granted,msg = utils.check_permissions("testboards",ObjectId(testboardID),userID)
         if not access_granted:
-            logger.error("Invalid access rights for"+endpoint)
-            return utils.return_401_error("You do not have access priviliges for this page.")
+            logger.error("Invalid access rights for "+endpoint)
+            return utils.return_403_error("You do not have access priviliges for this page.")
 
         testboard_details,msg = functions.get_testboard(testboardID)
         
@@ -272,10 +272,10 @@ def list_testboard():
 
 
 
-@profile.route("/app/testboard/testFiles",methods=["POST"])
+@profile.route("/app/testboard/testFiles/list",methods=["POST"])
 def get_test_files():
 
-    endpoint = "/app/testboard/testFiles"
+    endpoint = "/app/testboard/testFiles/list"
 
     try:
 
@@ -294,7 +294,14 @@ def get_test_files():
             logger.error(message+":"+str(data))
             return utils.return_400_error(message)
 
-        file_list,msg = functions.get_test_files(data["testboardID"])
+        testboardID = data["testboardID"]
+
+        access_granted,msg = utils.check_permissions("testboards",ObjectId(testboardID),userID)
+        if not access_granted:
+            logger.error("Invalid access rights for "+endpoint)
+            return utils.return_403_error("You do not have access priviliges for this page.")
+
+        file_list,msg = functions.get_test_files(testboardID)
         
         if file_list is None:
             logger.error(msg)
@@ -310,3 +317,130 @@ def get_test_files():
         traceback.print_exc()
 
         return utils.return_400_error(message)
+
+
+
+@profile.route("/app/testboard/testFiles/delete",methods=["POST"])
+def delete_test_files():
+
+    endpoint = "/app/testboard/testFiles/delete"
+
+    try:
+
+        userID,organizationID = utils.authenticate(request.headers.get('Authorization'))
+
+        if userID is None:
+            logger.error("Invalid auth token sent for"+endpoint)
+            return utils.return_401_error("Session expired. Please login again.")
+
+        logger.info(f"Testboard DELETE test images attempt by user {userID}")
+
+        data = request.json
+
+        if utils.check_params(["testboardID","imageIDs"],[str,list],data) == False:
+            message = "Invalid params sent in request body for "+endpoint
+            logger.error(message+":"+str(data))
+            return utils.return_400_error(message)
+
+        testboardID = data["testboardID"]
+        imageIDs = data["imageIDs"]
+
+        original_count = len(imageIDs)
+
+        access_granted,msg = utils.check_permissions("testboards",ObjectId(testboardID),userID)
+        if not access_granted:
+            logger.error("Invalid access rights for "+endpoint)
+            return utils.return_403_error("You do not have access priviliges for this page.")
+
+        delete_count = functions.delete_test_files(testboardID,imageIDs)
+        
+        if delete_count is None:
+            msg = "Unexpected error occurred"
+            logger.error(msg)
+            return utils.return_400_error(msg)
+
+        return utils.return_200_response({"message":msg,"status":200,"deleteCount":delete_count,"originalCount":original_count})
+
+
+    except Exception as e:
+
+        message = "Unexpected error"
+        logger.error(message+":"+str(e))
+        traceback.print_exc()
+
+        return utils.return_400_error(message)
+
+
+
+
+@profile.route("/app/testboard/testFiles/annotation/update",methods=["POST"])
+def update_test_files_annotation():
+
+    endpoint = "/app/testboard/testFiles/annotation/update"
+
+    try:
+
+        userID,organizationID = utils.authenticate(request.headers.get('Authorization'))
+
+        if userID is None:
+            logger.error("Invalid auth token sent for"+endpoint)
+            return utils.return_401_error("Session expired. Please login again.")
+
+        logger.info(f"Testboard annotation UPDATE attempt by user {userID}")
+
+        data = request.json
+
+        if utils.check_params(["testboardID","imageID","annotation"],[str,str,str],data) == False:
+            message = "Invalid params sent in request body for "+endpoint
+            logger.error(message+":"+str(data))
+            return utils.return_400_error(message)
+
+        testboardID = data["testboardID"]
+        imageID = data["imageID"]
+        annotation = data["annotation"]
+
+        print(data)
+
+        access_granted,msg = utils.check_permissions("testboards",ObjectId(testboardID),userID)
+        if not access_granted:
+            logger.error("Invalid access rights for "+endpoint)
+            return utils.return_403_error("You do not have access priviliges for this page.")
+
+
+        result = functions.update_testfile_annotation(testboardID,imageID,annotation)
+
+        if result == False:
+            msg = "Unexpected error occurred"
+            logger.error(msg)
+            return utils.return_400_error(msg)
+
+        logger.info(f"Testboard annotation UPDATE successful by user {userID}")
+
+        return utils.return_200_response({"message":"success","status":200})
+
+
+    except Exception as e:
+
+        message = "Unexpected error"
+        logger.error(message+":"+str(e))
+        traceback.print_exc()
+
+        return utils.return_400_error(message)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

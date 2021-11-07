@@ -4,6 +4,7 @@ import traceback
 from bson.objectid import ObjectId
 import utils
 import global_vars as g 
+import fs_utils
 
 def create_testboard(data,userID,organizationID):
 
@@ -207,6 +208,34 @@ def get_image_classification_test_files(testboardID):
         image_list[i]["fileSize"] = str(round((image_list[i]["fileSize"])/1024,1)) + "kB"
 
     return image_list,"success"
+
+
+
+
+def delete_test_files(testboardID,imageIDs):
+
+    images_urls = dbops.get_links_for_images(testboardID,imageIDs)
+
+    for url in images_urls:
+        r = fs_utils.delete_from_fs(url["imageUrl"])
+        if r == False:
+            logger.error(f"unable to delete {url} from fs")
+
+    delete_count = dbops.delete_images_from_testboard(testboardID,imageIDs)
+
+    return delete_count    
+
+
+
+
+def update_testfile_annotation(testboardID,imageID,annotation):
+
+    r = dbops.update_testfile_annotation(testboardID,imageID,annotation)
+
+    return r
+
+
+
 
 
 

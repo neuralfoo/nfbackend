@@ -4,7 +4,7 @@ import secrets
 import datetime 
 from loguru import logger
 from bson.objectid import ObjectId
-
+import traceback
 
 myclient = pymongo.MongoClient("mongodb://localhost:27017/")
 
@@ -535,5 +535,88 @@ def get_images_for_testboard(testboardID):
         return []
     
     return list(r)
+
+
+
+
+def delete_images_from_testboard(testboardID,imageIDs):
+
+    try:
+        imageIDs = [ObjectId(imageID) for imageID in imageIDs]
+
+        coll = db["images"]
+
+        query = {"_id" : { "$in" : imageIDs }, "testboardID":testboardID }
+
+        r = coll.delete_many(query)
+
+        return r.deleted_count
+
+    except Exception as e:
+        logger.error(f"Error while deleting images attached to testboardID {testboardID} "+str(e))
+        traceback.print_exc()
+        return None
+
+
+
+def get_links_for_images(testboardID,imageIDs):
+
+    
+    try:
+        imageIDs = [ObjectId(imageID) for imageID in imageIDs]
+
+        coll = db["images"]
+
+        query = {"_id" : { "$in" : imageIDs }, "testboardID":testboardID }
+
+        r = coll.find(query,["imageUrl"])
+
+        if r:
+            return list(r)
+        else:
+            return []
+
+    except Exception as e:
+        logger.error(f"Error while deleting images attached to testboardID {testboardID} "+str(e))
+        traceback.print_exc()
+        return None    
+
+
+
+def update_testfile_annotation(testboardID,imageID,annotation):
+
+    try:
+        imageID = ObjectId(imageID)
+
+        coll = db["images"]
+
+        query = {"_id" : imageID , "testboardID":str(testboardID) }
+
+        r = coll.update_one(query,{ "$set": {"annotation":annotation} })
+
+        print(r.matched_count)
+
+        if r.matched_count == 1:
+            return True
+        else:
+            return False
+
+    except Exception as e:
+        logger.error(f"Error while updating image annotations for testboardID {testboardID} "+str(e))
+        traceback.print_exc()
+        return False
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
