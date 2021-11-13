@@ -6,8 +6,8 @@ from loguru import logger
 from bson.objectid import ObjectId
 import traceback
 
+# connect=False
 myclient = pymongo.MongoClient("mongodb://localhost:27017/")
-
 db = myclient["neuralfoo"]
 
 '''
@@ -186,7 +186,6 @@ def insert_testboard(apiName,apiType,apiEnvironment,visibility,userID,organizati
             "apiName": apiName, 
             "apiType": apiType, 
             "apiEnvironment":apiEnvironment,
-            "apiCreationDate":creationTime,
             "apiCreationDate":creationTime,
             "apiStatus":"ready",
             "apiLastRunOn":"-",
@@ -605,6 +604,97 @@ def update_testfile_annotation(testboardID,imageID,annotation):
         logger.error(f"Error while updating image annotations for testboardID {testboardID} "+str(e))
         traceback.print_exc()
         return False
+
+
+def insert_accuracy_test_image_classification():
+
+    images = db["image_classification_accuracy_tests"]
+
+    entry = {
+        "testboardID":testboardID,
+        "creatorID":creatorID
+        }
+    try:
+        r = images.insert_one(entry)
+    except Exception as e:
+        logger.error("Error while inserting image into db. "+str(e))
+        return None
+
+    return str(r.inserted_id)
+
+
+def update_accuracy_test_details(test,field,value):
+
+    coll = db["images"]
+    
+    query = { "_id": ObjectId(imageID) }
+    
+    entity = { "$set": { field : value } }
+
+    try:
+        r = coll.update_one(query,entity)
+    except Exception as e:
+        logger.error("Error while updating image collection "+str(e))
+        return False
+    
+    return True
+
+
+
+def insert_imageclassification_accuracytest(creatorID,testboard_snapshot,start_time,end_time,test_type,
+                                            test_status,accuracy,confusion_matrix):
+
+
+    coll = db["tests"]
+    doc = {
+            "creatorID":creatorID ,
+            "testboard":testboard_snapshot,
+            "startTime":start_time ,
+            "endTime":end_time ,
+            "testType":test_type ,
+            "testStatus":test_status ,
+            "accuracy":accuracy ,
+            "confusionMatrix":confusion_matrix
+            }
+    try:
+        r = coll.insert_one(doc)
+    except Exception as e:
+        logger.error("Error while inserting image classification accuracy test into db "+str(e))
+        return False
+
+    return str(r.inserted_id)
+
+
+
+def get_test(testID):
+
+    tests = db["tests"]
+    details = tests.find({"_id":ObjectId(testID)})
+    details = list(details)
+    if len(details)>0:
+        return details[0]
+
+    logger.error("db find returned no results")
+    return None
+
+
+
+def update_test(testID,field,value):
+
+    coll = db["tests"]
+    
+    query = { "_id": ObjectId(testID) }
+    
+    entity = { "$set": { field : value } }
+
+    try:
+        r = coll.update_one(query,entity)
+    except Exception as e:
+        logger.error("Error while updating db "+str(e))
+        return False
+    
+    return True
+
 
 
 

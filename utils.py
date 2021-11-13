@@ -67,12 +67,14 @@ def authenticate(token):
 def check_params(params,dtypes,data):
 
     if all (k in data for k in params) == False:
+        logger.error("All parameters not present")
+
         return False
 
     for p,d in zip(params,dtypes):
 
         if type(data[p]) != d:
-            print("Error in ",p,d)
+            logger.error("Error in ",p,d)
             return False
 
     return True

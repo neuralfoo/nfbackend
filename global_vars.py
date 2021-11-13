@@ -10,3 +10,7 @@ api_named_types = {
 	"imagesegmentation":"Image Segmentation",
 	"objectdetection":"Object Detection"
 }
+testcontroller_actions = ["start","stop"]
+
+
+

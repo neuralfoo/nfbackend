@@ -66,6 +66,20 @@ def delete_from_fs(fileurl):
 
 
 
+def download_from_fs(fileurl):
+
+    with requests.get(fileurl, stream=True) as r:
+        r.raise_for_status()
+        local_filepath,_=get_new_filename(folder="./trove/",filetype="")
+        with open(local_filepath, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=8192): 
+                # If you have chunk encoded response uncomment if
+                # and set chunk_size parameter to None.
+                #if chunk: 
+                f.write(chunk)
+    return local_filepath
+
+
 if __name__=="__main__":
 
     pass
