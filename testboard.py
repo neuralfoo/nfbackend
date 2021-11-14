@@ -163,7 +163,7 @@ def update_testboard():
 
         access_granted,msg = utils.check_permissions("testboards",ObjectId(testboardID),userID)
         if not access_granted:
-            logger.error("Invalid access rights for "+endpoint)
+            logger.error(f"Invalid access rights for {endpoint} by {userID}")
             return utils.return_403_error("You do not have access priviliges for this page.")
 
         logger.info("Testboard UPDATE attempt: "+str(data) + "by user "+userID)
@@ -210,7 +210,7 @@ def get_testboard(testboardID):
 
         access_granted,msg = utils.check_permissions("testboards",ObjectId(testboardID),userID)
         if not access_granted:
-            logger.error("Invalid access rights for "+endpoint)
+            logger.error(f"Invalid access rights for {endpoint} by {userID}")
             return utils.return_403_error("You do not have access priviliges for this page.")
 
         testboard_details,msg = functions.get_testboard(testboardID)
@@ -298,7 +298,7 @@ def get_test_files():
 
         access_granted,msg = utils.check_permissions("testboards",ObjectId(testboardID),userID)
         if not access_granted:
-            logger.error("Invalid access rights for "+endpoint)
+            logger.error(f"Invalid access rights for {endpoint} by {userID}")
             return utils.return_403_error("You do not have access priviliges for this page.")
 
         file_list,msg = functions.get_test_files(testboardID)
@@ -349,10 +349,10 @@ def delete_test_files():
 
         access_granted,msg = utils.check_permissions("testboards",ObjectId(testboardID),userID)
         if not access_granted:
-            logger.error("Invalid access rights for "+endpoint)
+            logger.error(f"Invalid access rights for {endpoint} by {userID}")
             return utils.return_403_error("You do not have access priviliges for this page.")
 
-        delete_count = functions.delete_test_files(testboardID,imageIDs)
+        delete_count = functions.update_image_visibility(testboardID,imageIDs,visible=False)
         
         if delete_count is None:
             msg = "Unexpected error occurred"
@@ -403,7 +403,7 @@ def update_test_files_annotation():
 
         access_granted,msg = utils.check_permissions("testboards",ObjectId(testboardID),userID)
         if not access_granted:
-            logger.error("Invalid access rights for "+endpoint)
+            logger.error(f"Invalid access rights for {endpoint} by {userID}")
             return utils.return_403_error("You do not have access priviliges for this page.")
 
 

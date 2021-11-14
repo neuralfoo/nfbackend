@@ -143,8 +143,21 @@ def api_runner(imageID,request_list):
 
 	gt = input_image_data["annotation"]
 
+	filename = input_image_data["filename"]
+
 	if type(gt) != str:
-		return [],None,None,None
+
+		final_output = {
+			"imageID":imageID,
+			"filename":filename,
+			"groundTruth":gt,
+			"prediction":None,
+			"result":False,
+			"response":None,
+			"imageUrl":f"/app/fs/image/{imageID}/{filename}",
+			"confidence":None
+		}
+		return final_output
 
 	global_variables_dict = {}
 
@@ -152,8 +165,9 @@ def api_runner(imageID,request_list):
 
 	global_variables_dict["input"] = input_image_url
 
-	request_outputs = []
+	request_outputs = {}
 
+	i = 1
 	for r in request_list:
 
 		headers = convert_headers_to_dict(r["headers"])
@@ -211,11 +225,11 @@ def api_runner(imageID,request_list):
 
 				logger.error(e)
 				traceback.print_exc()
-				output_dict = {}
 
-			request_outputs.append(response.json())
+			request_outputs["request"+str(i)] = response.json()
 
 
+		i+=1
 
 	prediction = None
 
@@ -229,9 +243,9 @@ def api_runner(imageID,request_list):
 	if "confidence" in global_variables_dict:
 		confidence = round(float(global_variables_dict["confidence"]),2)
 
-	filename = input_image_data["filename"]
 
 	final_output = {
+		"imageID":imageID,
 		"filename":filename,
 		"groundTruth":gt,
 		"prediction":prediction,
@@ -250,9 +264,9 @@ def api_runner(imageID,request_list):
 
 
 
-if __name__=="__main__":
+# if __name__=="__main__":
 
-	request_list = extract_requests_from_testboard(testboardID="61814c8bfd3f474d4bcc746c")
-	api_runner("61880e6dbd16d9ea5d14fc2d",request_list)
+# 	request_list = extract_requests_from_testboard(testboardID="61814c8bfd3f474d4bcc746c")
+# 	api_runner("61880e6dbd16d9ea5d14fc2d",request_list)
 
 

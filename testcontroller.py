@@ -45,12 +45,18 @@ def imageclassification_accuracy_testcontroller():
                 logger.error(message+":"+str(data[param]))
                 return utils.return_400_error(message)
 
-
-        #### sanity checks completed and we can now proceed to insert data into DB ####
+        #### sanity checks completed and we can now proceed to run accuracy test ####
 
         action = data["action"]
         testboardID = data["testboardID"]
         accuracyTestID = data["accuracyTestID"]
+
+
+        access_granted,msg = utils.check_permissions("testboards",ObjectId(testboardID),userID)
+        if not access_granted:
+            logger.error(f"Invalid access rights for {endpoint} by {userID}")
+            return utils.return_403_error("You do not have access priviliges for this page.")
+
 
         logger.info(f"Test controller {action} accuracy test attempt: "+str(data) + "by user "+userID)
 
@@ -61,7 +67,7 @@ def imageclassification_accuracy_testcontroller():
             message = "Unexpected error occurred."
             return utils.return_400_error(message)
 
-        logger.info(f"Accuracy test successfilly {action}ed")
+        logger.info(f"Accuracy test successfully {action}ed")
 
         return utils.return_200_response({"message":msg,"status":200})
     
@@ -73,3 +79,108 @@ def imageclassification_accuracy_testcontroller():
         traceback.print_exc()
 
         return utils.return_400_error(message)
+
+
+
+
+@profile.route("/app/testcontroller/imageclassification/accuracytest/list",methods=["POST"])
+def get_accuracytests_list():
+
+    endpoint = "/app/testcontroller/imageclassification/accuracytest/list"
+
+    try:
+
+        userID,organizationID = utils.authenticate(request.headers.get('Authorization'))
+
+        if userID is None:
+            logger.error("Invalid auth token sent for"+endpoint)
+            return utils.return_401_error("Session expired. Please login again.")
+
+        logger.info(f"Image classification Accuracy test LIST attempt by user {userID}")
+
+        data = request.json
+
+        if utils.check_params(["testboardID"],[str],data) == False:
+            message = "Invalid params sent in request body for "+endpoint
+            logger.error(message+":"+str(data))
+            return utils.return_400_error(message)
+
+        testboardID = data["testboardID"]
+
+        access_granted,msg = utils.check_permissions("testboards",ObjectId(testboardID),userID)
+        if not access_granted:
+            logger.error(f"Invalid access rights for {endpoint} by {userID}")
+            return utils.return_403_error("You do not have access priviliges for this page.")
+
+        test_list,msg = functions.get_imageclassification_accuracytests(testboardID)
+        
+        if test_list is None:
+            logger.error(msg)
+            return utils.return_400_error(msg)
+
+        return utils.return_200_response({"message":msg,"status":200,"tests":test_list})
+
+
+    except Exception as e:
+
+        message = "Unexpected error"
+        logger.error(message+":"+str(e))
+        traceback.print_exc()
+
+        return utils.return_400_error(message)
+
+
+
+
+
+
+@profile.route("/app/testcontroller/test/delete",methods=["POST"])
+def delete_test():
+
+    endpoint = "/app/testcontroller/test/delete"
+
+    try:
+
+        userID,organizationID = utils.authenticate(request.headers.get('Authorization'))
+
+        if userID is None:
+            logger.error("Invalid auth token sent for"+endpoint)
+            return utils.return_401_error("Session expired. Please login again.")
+
+        logger.info(f"test DELETE attempt by user {userID}")
+
+        data = request.json
+
+        if utils.check_params(["testID","testboardID"],[str,str],data) == False:
+            message = "Invalid params sent in request body for "+endpoint
+            logger.error(message+":"+str(data))
+            return utils.return_400_error(message)
+
+        testID = data["testID"]
+        testboardID = data["testboardID"]
+
+        access_granted,msg = utils.check_permissions("testboards",ObjectId(testboardID),userID)
+        if not access_granted:
+            logger.error(f"Invalid access rights for {endpoint} by {userID}")
+            return utils.return_403_error("You do not have access priviliges for this page.")
+
+        result,msg = functions.delete_test(testID)
+        
+        if result == False:
+            logger.error(msg)
+            return utils.return_400_error(msg)
+
+        return utils.return_200_response({"message":msg,"status":200})
+
+
+    except Exception as e:
+
+        message = "Unexpected error"
+        logger.error(message+":"+str(e))
+        traceback.print_exc()
+
+        return utils.return_400_error(message)
+
+
+
+

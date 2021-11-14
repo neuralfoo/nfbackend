@@ -25,19 +25,15 @@ if __name__=="__main__":
 	import sys
 
 	testID = sys.argv[1]
-
 	logger.info(f"Received testID {testID}")
 
 	test_details = dbops.get_test(testID)
-
 	logger.info(f"Test object fetched {test_details}")
 
 	request_list = api_controller.extract_requests_from_testboard(test_details["testboard"])
-
 	logger.info(f"Request list generated")
 
 	imageIDs = dbops.get_images_for_testboard(test_details["testboard"]["testboardID"])
-
 	logger.info(f"Image ID received")
 
 	y_true = []
@@ -46,6 +42,10 @@ if __name__=="__main__":
 	for imageID in imageIDs:
 	
 		api_hit_result = api_controller.api_runner(str(imageID["_id"]),request_list)
+
+		api_hit_result["testID"] = testID
+
+		dbops.insert_api_hit(api_hit_result)
 
 		logger.info("api_hit_result")
 		logger.info(api_hit_result)
@@ -56,6 +56,8 @@ if __name__=="__main__":
 
 
 	acc = metrics.accuracy_score(y_true, y_pred)
+
+	acc = round(float(acc*100),2)
 
 	dbops.update_test(testID,"accuracy",acc)
 
@@ -70,6 +72,8 @@ if __name__=="__main__":
 	end_time = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
 
 	dbops.update_test(testID,"endTime",end_time)
+
+	dbops.update_test(testID,"testStatus","completed")
 
 
 

@@ -473,7 +473,8 @@ def insert_image(filename,testboardID,imageUrl,fileSize,imageHeight,imageWidth,i
         "annotation":annotation,
         "uploadTime":creationTime,
         "fileType":fileType,
-        "creatorID":creatorID
+        "creatorID":creatorID,
+        "visible":True
         }
     try:
         r = images.insert_one(entry)
@@ -524,7 +525,7 @@ def get_images_for_testboard(testboardID):
     
     coll = db["images"]
     
-    query = { "testboardID": testboardID }
+    query = { "testboardID": testboardID, "visible":True }
     
     try:
         r = coll.find(query)
@@ -641,8 +642,8 @@ def update_accuracy_test_details(test,field,value):
 
 
 
-def insert_imageclassification_accuracytest(creatorID,testboard_snapshot,start_time,end_time,test_type,
-                                            test_status,accuracy,confusion_matrix):
+def insert_imageclassification_accuracytest(creatorID,testboard_snapshot,start_time,end_time,num_test_images,
+                                            test_type,test_status,accuracy,confusion_matrix):
 
 
     coll = db["tests"]
@@ -651,6 +652,7 @@ def insert_imageclassification_accuracytest(creatorID,testboard_snapshot,start_t
             "testboard":testboard_snapshot,
             "startTime":start_time ,
             "endTime":end_time ,
+            "testImagesCount":num_test_images,
             "testType":test_type ,
             "testStatus":test_status ,
             "accuracy":accuracy ,
@@ -696,13 +698,79 @@ def update_test(testID,field,value):
     return True
 
 
+def list_tests(testboardID,test_type):
+
+
+    coll = db["tests"]
+    
+    query = { "testboard.testboardID": testboardID , "testType":test_type }
+    
+    try:
+        r = coll.find(query)
+    except Exception as e:
+        logger.error(f"Error while getting tests attached to testboardID {testboardID} "+str(e))
+        traceback.print_exc()
+        return []
+    
+    return list(r)
+
+def delete_test(testID):
+
+    try:
+        coll = db["tests"]
+        coll.delete_one({"_id":ObjectId(testID)})
+        return True
+
+    except Exception as e:
+        logger.error(f"Error while deleting test {testID}"+str(e))
+        traceback.print_exc()
+        return False
+
+
+def delete_all_api_hits(testID):
+
+    try:
+        coll = db["hits"]
+        r = coll.delete_many({"testID":testID})
+        return r.deleted_count
+
+    except Exception as e:
+        logger.error(f"Error while deleting test {testID}"+str(e))
+        traceback.print_exc()
+        return None
 
 
 
+def insert_api_hit(hit_object):
 
 
+    coll = db["hits"]
+    try:
+        r = coll.insert_one(hit_object)
+    except Exception as e:
+        logger.error("Error while inserting api hit into db "+str(e))
+        return False
+
+    return str(r.inserted_id)
 
 
+def update_image_visibility(imageIDs,visibility):
+
+    try:
+
+        imageIDs = [ObjectId(imageID) for imageID in imageIDs]
+        coll = db["images"]
+        newentry = { "$set": { "visible": visibility } }
+        query = {"_id" : { "$in" : imageIDs }}
+
+        r = coll.update_many(query,newentry)
+
+        return r.modified_count
+
+    except Exception as e:
+        logger.error(f"Error while updating visibility of images "+str(e))
+        traceback.print_exc()
+        return None
 
 
 

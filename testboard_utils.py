@@ -226,6 +226,12 @@ def delete_test_files(testboardID,imageIDs):
     return delete_count    
 
 
+def update_image_visibility(testboardID,imageIDs,visible):
+
+    modified_count = dbops.update_image_visibility(imageIDs,visible)
+
+    return modified_count
+
 
 
 def update_testfile_annotation(testboardID,imageID,annotation):
