@@ -714,6 +714,23 @@ def list_tests(testboardID,test_type):
     
     return list(r)
 
+
+def list_all_hits(testID):
+    
+    coll = db["hits"]
+    
+    query = { "testID": testID }
+    
+    try:
+        r = coll.find(query)
+    except Exception as e:
+        logger.error(f"Error while getting api hits attached to testID {testID} "+str(e))
+        traceback.print_exc()
+        return []
+    
+    return list(r)
+
+
 def delete_test(testID):
 
     try:

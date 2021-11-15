@@ -184,3 +184,113 @@ def delete_test():
 
 
 
+@profile.route("/app/testcontroller/imageclassification/accuracytest/get",methods=["POST"])
+def get_accuracytest():
+
+    endpoint = "/app/testcontroller/imageclassification/accuracytest/get"
+
+    try:
+
+        userID,organizationID = utils.authenticate(request.headers.get('Authorization'))
+
+        if userID is None:
+            logger.error("Invalid auth token sent for"+endpoint)
+            return utils.return_401_error("Session expired. Please login again.")
+
+        logger.info(f"Image classification Accuracy test LIST attempt by user {userID}")
+
+        data = request.json
+
+        if utils.check_params(["testboardID","testID"],[str,str],data) == False:
+            message = "Invalid params sent in request body for "+endpoint
+            logger.error(message+":"+str(data))
+            return utils.return_400_error(message)
+
+        testboardID = data["testboardID"]
+        testID = data["testID"]
+
+        access_granted,msg = utils.check_permissions("testboards",ObjectId(testboardID),userID)
+        if not access_granted:
+            logger.error(f"Invalid access rights for {endpoint} by {userID}")
+            return utils.return_403_error("You do not have access priviliges for this page.")
+
+        test_details,msg = functions.get_imageclassification_accuracytest_details(testID,testboardID)
+        
+        if test_details is None:
+            logger.error(msg)
+            return utils.return_400_error(msg)
+
+        return utils.return_200_response({"message":msg,"status":200,"test":test_details})
+
+
+    except Exception as e:
+
+        message = "Unexpected error"
+        logger.error(message+":"+str(e))
+        traceback.print_exc()
+
+        return utils.return_400_error(message)
+
+
+
+
+@profile.route("/app/testcontroller/test/hitlist",methods=["POST"])
+def get_accuracytest_api_hits():
+
+    endpoint = "/app/testcontroller/test/hitlist"
+
+    try:
+
+        userID,organizationID = utils.authenticate(request.headers.get('Authorization'))
+
+        if userID is None:
+            logger.error("Invalid auth token sent for"+endpoint)
+            return utils.return_401_error("Session expired. Please login again.")
+
+        logger.info(f"test api hit LIST attempt by user {userID}")
+
+        data = request.json
+
+        if utils.check_params(["testboardID","testID"],[str,str],data) == False:
+            message = "Invalid params sent in request body for "+endpoint
+            logger.error(message+":"+str(data))
+            return utils.return_400_error(message)
+
+        testboardID = data["testboardID"]
+        testID = data["testID"]
+
+        access_granted,msg = utils.check_permissions("testboards",ObjectId(testboardID),userID)
+        if not access_granted:
+            logger.error(f"Invalid access rights for {endpoint} by {userID}")
+            return utils.return_403_error("You do not have access priviliges for this page.")
+
+        api_hits,msg = functions.list_api_hits(testID,testboardID)
+        
+        if api_hits is None:
+            logger.error(msg)
+            return utils.return_400_error(msg)
+
+        return utils.return_200_response({"message":msg,"status":200,"hits":api_hits})
+
+
+    except Exception as e:
+
+        message = "Unexpected error"
+        logger.error(message+":"+str(e))
+        traceback.print_exc()
+
+        return utils.return_400_error(message)
+
+
+
+
+
+
+
+
+
+
+
+
+
+

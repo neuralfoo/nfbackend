@@ -3,7 +3,7 @@ import traceback
 import os
 import dbops 
 import datetime
-
+import global_vars as g
 
 def get_snapshot_of_testboard(testboardID):
 
@@ -101,6 +101,71 @@ def delete_test(testID):
 		logger.error("Error while deleting test.")
 		traceback.print_exc()
 		return False,"Unexpected error, could not delete test."
+
+
+
+
+def get_imageclassification_accuracytest_details(testID,testboardID):
+
+	try:
+		test_details = dbops.get_test(testID)
+
+		if test_details["testboard"]["testboardID"] != testboardID:
+			return None,"Invalid request"
+
+		test_details["testID"] = str(test_details["_id"]) 
+		del test_details["_id"]
+
+		test_details["testboard"]["apiTypeName"] = g.api_named_types[test_details["testboard"]["apiType"]]
+
+		if type(test_details["endTime"]) == str and type(test_details["startTime"]) == str:
+			end_time = datetime.datetime.strptime(test_details["endTime"],"%d-%m-%Y %H:%M:%S")
+			start_time = datetime.datetime.strptime(test_details["startTime"],"%d-%m-%Y %H:%M:%S")
+
+			diff = end_time - start_time
+
+			duration = datetime.timedelta(seconds=diff.total_seconds())
+			test_details["duration"] = str(duration)
+			
+		else:
+			test_details["endTime"] = "-"
+			test_details["duration"] = "-"
+
+
+		# test_details["testboard"]["apiEnvironment"] = "preproduction"
+
+		return test_details,"success"
+
+	except Exception as e:
+		logger.error("Error while fetching test details")
+		traceback.print_exc()
+		return None,"Error while fetching test details"
+
+
+
+def list_api_hits(testID,testboardID):
+
+	try:
+		test_details = dbops.get_test(testID)
+
+		if test_details["testboard"]["testboardID"] != testboardID:
+			return None,"Invalid request"
+
+		hit_list = dbops.list_all_hits(testID)
+
+		for i in range(len(hit_list)):
+			hit_list[i]["key"] = i+1
+			hit_list[i]["hitID"] = str(hit_list[i]["_id"]) 
+			del hit_list[i]["_id"]
+
+			hit_list[i]["totalResponseTime"] = str(hit_list[i]["totalResponseTime"])+"s"
+
+		return hit_list,"success"
+
+	except Exception as e:
+		logger.error("Error while fetching test details")
+		traceback.print_exc()
+		return None,"Error while fetching test details"
 
 
 

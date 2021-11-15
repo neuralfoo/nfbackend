@@ -10,6 +10,7 @@ import requests
 from requests_toolbelt import MultipartEncoder
 import re
 import os
+import time
 
 def extract_requests_from_testboard(testboard_details):
 
@@ -165,6 +166,10 @@ def api_runner(imageID,request_list):
 
 	global_variables_dict["input"] = input_image_url
 
+	total_response_time = 0.0
+
+	individual_response_times = []
+
 	request_outputs = {}
 
 	i = 1
@@ -180,22 +185,24 @@ def api_runner(imageID,request_list):
 			if r["requestBodyType"] == "json":
 				input_data = place_variables_in_request_json(r["requestBody"],global_variables_dict)
 
-				# print("\n",input_data,"\n")
+
+				start_time = time.monotonic()
+
 				response = requests.request(method=r["method"],
 					url=r["endpoint"],
 					json=input_data,
 					headers=headers
 					)
 
-			# r["requestBodyType"] == "json"
+				end_time = time.monotonic()
+
+				diff = round(end_time-start_time,3)
+				total_response_time += diff
+				individual_response_times.append(diff)
+
 
 		if r["inputDataType"] == "file":
-			'''
-			save file locally
-			read file into varable
-			create multi part request
-			hit request
-			'''
+
 			downloaded_file = fs_utils.download_from_fs(input_image_url)
 			file_name = input_image_url.split("/")[-1]
 
@@ -209,8 +216,16 @@ def api_runner(imageID,request_list):
 
 				headers['Content-Type'] = multipart_data.content_type
 
-				response = requests.post(r["endpoint"], data=multipart_data,
+				start_time = time.monotonic()
+
+				response = requests.request(method=r["method"],url=r["endpoint"], data=multipart_data,
                                  headers=headers)
+
+				end_time = time.monotonic()
+
+				diff = round(end_time-start_time,3)
+				total_response_time += diff
+				individual_response_times.append(diff)
 
 				os.remove(downloaded_file)
 
@@ -252,7 +267,9 @@ def api_runner(imageID,request_list):
 		"result":prediction==gt,
 		"response":request_outputs,
 		"imageUrl":f"/app/fs/image/{imageID}/{filename}",
-		"confidence":confidence
+		"confidence":confidence,
+		"totalResponseTime":total_response_time,
+		"requestResponseTimes":individual_response_times
 	}
 
 	# print("global_variables_dict:",global_variables_dict)
