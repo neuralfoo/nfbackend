@@ -38,6 +38,7 @@ if __name__=="__main__":
 
 	y_true = []
 	y_pred = []	
+	all_classes = []
 
 	for imageID in imageIDs:
 	
@@ -54,6 +55,10 @@ if __name__=="__main__":
 			y_true.append(api_hit_result["groundTruth"])
 			y_pred.append(api_hit_result["prediction"])
 
+		if api_hit_result["groundTruth"] is not None:
+			all_classes.append(api_hit_result["groundTruth"])
+
+	all_classes = sorted(list(set(y_true)))
 
 	acc = metrics.accuracy_score(y_true, y_pred)
 
@@ -61,13 +66,40 @@ if __name__=="__main__":
 
 	dbops.update_test(testID,"accuracy",acc)
 
+	dbops.update_test(testID,"classes",all_classes)
+
 	logger.info(f"Final accuray score: {acc}")
 
-	confusion_matrix = metrics.confusion_matrix(y_true, y_pred)
+	confusion_matrix = metrics.confusion_matrix(y_true, y_pred,labels=all_classes)
 
-	dbops.update_test(testID,"confusionMatrix",confusion_matrix.tolist())
+	confusion_matrix = confusion_matrix.tolist()
 
-	logger.info(f"Confusion matrix: \n {confusion_matrix}")
+	m = len(all_classes)+1
+	final_confusion_matrix = [ [ '' for i in range(m) ] for j in range(m) ]
+	
+	for i in range(len(final_confusion_matrix)):
+
+		for j in range(len(final_confusion_matrix[i])):
+		
+			if i == 0 and j == 0:
+				final_confusion_matrix[i][j] = 'gt\\pred'
+
+			elif i == 0 and j !=0 :
+
+				final_confusion_matrix[i][j] = all_classes[j-1]
+
+			elif i != 0 and j == 0 :
+				final_confusion_matrix[i][j] = all_classes[i-1]
+
+			elif i != 0 and j != 0 :
+
+				final_confusion_matrix[i][j] = confusion_matrix[i-1][j-1]			
+
+
+
+	dbops.update_test(testID,"confusionMatrix",final_confusion_matrix)
+
+	logger.info(f"Confusion matrix: \n {final_confusion_matrix}")
 
 	end_time = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
 

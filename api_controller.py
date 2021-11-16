@@ -249,8 +249,8 @@ def api_runner(imageID,request_list):
 	prediction = None
 
 	if "prediction" in global_variables_dict:
-		if global_variables_dict["prediction"] == input_image_data["annotation"]:
-			prediction = global_variables_dict["prediction"]
+		# if global_variables_dict["prediction"] == input_image_data["annotation"]:
+		prediction = global_variables_dict["prediction"]
 
 
 	confidence = "-"
