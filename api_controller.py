@@ -12,6 +12,9 @@ import re
 import os
 import time
 
+
+public_ip = "http://34.125.24.109"
+
 def extract_requests_from_testboard(testboard_details):
 
 	request_list = []
@@ -161,8 +164,10 @@ def api_runner(imageID,request_list):
 		return final_output
 
 	global_variables_dict = {}
-	input_image_url = "http://34.125.24.109"+f"/app/fs/image/{imageID}/{filename}"
-	global_variables_dict["input"] = input_image_url
+
+	input_image_url = input_image_data["imageUrl"]
+
+	global_variables_dict["input"] = public_ip + f"/app/fs/image/{imageID}/{filename}"
 
 	total_response_time = 0.0
 

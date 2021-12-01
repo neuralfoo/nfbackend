@@ -44,8 +44,9 @@ def image_upload_to_testboard():
         try:
             data = dict(request.form)
             testboardID = data["testboardID"]
+            groundTruth = data["groundTruth"]
         except Exception as e:
-            message = "TestboardID not in request"
+            message = "TestboardID/groundTruth not in request"
             logger.error(message+":"+str(e))
             traceback.print_exc()
             return utils.return_400_error(message)
@@ -83,6 +84,9 @@ def image_upload_to_testboard():
             logger.error(message)
             return utils.return_400_error(message)
 
+        if groundTruth == "":
+            groundTruth = None
+
         imageID = dbops.insert_image(
             filename=secure_filename(file.filename),
             testboardID=testboardID,
@@ -92,7 +96,7 @@ def image_upload_to_testboard():
             imageWidth=width,
             imageHash=imagehash,
             imageOcr="",
-            annotation=None,
+            annotation=groundTruth,
             fileType=kind.mime,
             creatorID=userID)
 
