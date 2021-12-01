@@ -161,9 +161,7 @@ def api_runner(imageID,request_list):
 		return final_output
 
 	global_variables_dict = {}
-
-	input_image_url = input_image_data["imageUrl"]
-
+	input_image_url = "http://34.125.24.109"+f"/app/fs/image/{imageID}/{filename}"
 	global_variables_dict["input"] = input_image_url
 
 	total_response_time = 0.0
