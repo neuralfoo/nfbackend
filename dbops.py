@@ -791,6 +791,25 @@ def update_image_visibility(imageIDs,visibility):
 
 
 
+def insert_functional_testcase(testboardID,testcase_name,request_data,userID):
+
+    coll = db["testcases"]
+    doc = {
+            "testboardID":testboardID,
+            "testcaseName":testcase_name,
+            "requests":request_data,
+            "creatorID":userID
+            }
+    try:
+        r = coll.insert_one(doc)
+    except Exception as e:
+        logger.error("Error while inserting image classification accuracy test into db "+str(e))
+        return False
+
+    return str(r.inserted_id)
+
+
+
 
 
 

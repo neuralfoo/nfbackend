@@ -8,7 +8,7 @@ import user
 import organization
 import fs 
 import testcontroller 
-
+import functionaltest
 
 app = Flask(__name__)
 
@@ -20,6 +20,7 @@ app.register_blueprint(user.profile)
 app.register_blueprint(organization.profile)
 app.register_blueprint(fs.profile)
 app.register_blueprint(testcontroller.profile)
+app.register_blueprint(functionaltest.profile)
 
 
 
