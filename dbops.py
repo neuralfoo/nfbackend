@@ -810,7 +810,21 @@ def insert_functional_testcase(testboardID,testcase_name,request_data,userID):
 
 
 
+def list_testcases(testboardID):
 
+
+    coll = db["testcases"]
+    
+    query = { "testboardID": testboardID }
+    
+    try:
+        r = coll.find(query)
+    except Exception as e:
+        logger.error(f"Error while getting testcases attached to testboardID {testboardID} "+str(e))
+        traceback.print_exc()
+        return []
+    
+    return list(r)
 
 
 

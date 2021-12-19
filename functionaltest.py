@@ -29,14 +29,14 @@ def functional_testcontroller_testcase_add():
         data = request.json
         
         if utils.check_params(
-            ["testboardID","testCaseName","requests"],[str,str,list],data) == False:
+            ["testboardID","testcaseName","testcaseValues"],[str,str,list],data) == False:
             message = "Invalid params sent in request body for "+endpoint
             logger.error(message+":"+str(data))
             return utils.return_400_error(message)
 
-        for request in data["requests"]:
+        for requestdata in data["testcaseValues"]:
             if utils.check_params(
-                ["requestBody","responseBody","responseTime","responseCode"],[str,str,str,str],request) == False:
+                ["requestBody","responseBody","responseTime","responseCode"],[str,str,str,str],requestdata) == False:
                 message = "Invalid params sent in request body for "+endpoint
                 logger.error(message+":"+str(data))
                 return utils.return_400_error(message)
@@ -44,9 +44,9 @@ def functional_testcontroller_testcase_add():
 
         #### sanity checks completed and we can now proceed to run accuracy test ####
 
-        testCaseName = data["testCaseName"]
+        testCaseName = data["testcaseName"]
         testboardID = data["testboardID"]
-        requests = data["requests"]
+        requests = data["testcaseValues"]
 
 
         access_granted,msg = utils.check_permissions("testboards",ObjectId(testboardID),userID)
@@ -79,6 +79,51 @@ def functional_testcontroller_testcase_add():
 
 
 
+@profile.route("/app/testcontroller/functionaltest/testcase/list",methods=["POST"])
+def get_functionaltests_list():
+
+    endpoint = "/app/testcontroller/functionaltest/testcase/list"
+
+    try:
+
+        userID,organizationID = utils.authenticate(request.headers.get('Authorization'))
+
+        if userID is None:
+            logger.error("Invalid auth token sent for"+endpoint)
+            return utils.return_401_error("Session expired. Please login again.")
+
+        logger.info(f"Functional test cases LIST attempt by user {userID}")
+
+        data = request.json
+
+        if utils.check_params(["testboardID"],[str],data) == False:
+            message = "Invalid params sent in request body for "+endpoint
+            logger.error(message+":"+str(data))
+            return utils.return_400_error(message)
+
+        testboardID = data["testboardID"]
+
+        access_granted,msg = utils.check_permissions("testboards",ObjectId(testboardID),userID)
+        if not access_granted:
+            logger.error(f"Invalid access rights for {endpoint} by {userID}")
+            return utils.return_403_error("You do not have access priviliges for this page.")
+
+        testcase_list,msg = functions.get_functional_testcases(testboardID)
+        
+        if testcase_list is None:
+            logger.error(msg)
+            return utils.return_400_error(msg)
+
+        return utils.return_200_response({"message":msg,"status":200,"tests":testcase_list})
+
+
+    except Exception as e:
+
+        message = "Unexpected error"
+        logger.error(message+":"+str(e))
+        traceback.print_exc()
+
+        return utils.return_400_error(message)
 
 
 
