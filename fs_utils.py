@@ -34,6 +34,7 @@ def get_upload_url():
         return "http://"+body["publicUrl"]+"/"+body["fid"]
 
     else:
+        logger.error("Seaweed fs not working as expected.")
         return None
 
 

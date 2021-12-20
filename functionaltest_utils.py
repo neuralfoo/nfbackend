@@ -42,3 +42,34 @@ def get_functional_testcases(testboardID):
 		logger.error("Error while fetching test list")
 		traceback.print_exc()
 		return None,"Error while fetching test list"
+
+
+
+def delete_testcase(testcaseID):
+
+	try:
+	    delete_result = dbops.delete_functional_testcase(testcaseID)
+	    return delete_result,"Deleted testcase"
+
+	except Exception as e:
+		logger.error("Error while deleting testcase")
+		traceback.print_exc()
+		return False,"Error while deleting testcase"	    
+
+
+def edit_testcase(testcaseID,testcaseName,testcaseValues,userID):
+
+	try:
+	    edit_result = dbops.update_functional_testcase(testcaseID,testcaseName,testcaseValues,userID)
+	    return edit_result,"Edited testcase"
+
+	except Exception as e:
+		logger.error("Error while editing testcase")
+		traceback.print_exc()
+		return False,"Error while editing testcase"	    
+
+
+
+
+
+

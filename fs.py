@@ -19,6 +19,7 @@ import requests
 
 profile = Blueprint('fs', __name__)
 
+os.makedirs("./trove/", exist_ok=True)
 
 @profile.route("/app/fs/image/upload",methods=["POST"])
 def image_upload_to_testboard():

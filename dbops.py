@@ -148,6 +148,7 @@ def create_auth_token(email,password):
 
     except Exception as e:
         logger.error("Error while updating auth token into db "+str(e))
+        traceback.print_exc()
         return None
     
     return token
@@ -200,6 +201,7 @@ def insert_testboard(apiName,apiType,apiEnvironment,visibility,userID,organizati
         r = testboards.insert_one(testboard)
     except Exception as e:
         logger.error("Error while inserting testboard into db "+str(e))
+        traceback.print_exc()
         return False
 
     return str(r.inserted_id)
@@ -228,6 +230,7 @@ def insert_request(testboardID,apiHeader,apiHttpMethod,apiEndpoint,apiRequestBod
         r = requests.insert_one(request)
     except Exception as e:
         logger.error("Error while inserting request into db "+str(e))
+        traceback.print_exc()
         return False
 
     return str(r.inserted_id)
@@ -245,6 +248,7 @@ def push_request_in_testboard(testboardID,requestID):
         r = coll.update(query,entity)
     except Exception as e:
         logger.error("Error while pushing request into testboard collection. "+str(e))
+        traceback.print_exc()
         return False
     
     return True
@@ -276,6 +280,7 @@ def update_collection(collection,id,field,value):
         r = coll.update_one(query,entity)
     except Exception as e:
         logger.error("Error while updating db "+str(e))
+        traceback.print_exc()
         return False
     
     return True
@@ -290,6 +295,7 @@ def get_testboard(testboardID):
         return details[0]
 
     logger.error("db find returned no results")
+    traceback.print_exc()
     return None
 
 def get_request(requestID):
@@ -300,6 +306,7 @@ def get_request(requestID):
     if len(details)>0:
         return details[0]
     logger.error("db find returned no results")
+    traceback.print_exc()
     return None
 
 def list_testboards(userID,organizationID):
@@ -480,6 +487,7 @@ def insert_image(filename,testboardID,imageUrl,fileSize,imageHeight,imageWidth,i
         r = images.insert_one(entry)
     except Exception as e:
         logger.error("Error while inserting image into db. "+str(e))
+        traceback.print_exc()
         return None
 
     return str(r.inserted_id)
@@ -496,6 +504,7 @@ def update_image_details(imageID,field,value):
         r = coll.update_one(query,entity)
     except Exception as e:
         logger.error("Error while updating image collection "+str(e))
+        traceback.print_exc()
         return False
     
     return True
@@ -619,6 +628,7 @@ def insert_accuracy_test_image_classification():
         r = images.insert_one(entry)
     except Exception as e:
         logger.error("Error while inserting image into db. "+str(e))
+        traceback.print_exc()
         return None
 
     return str(r.inserted_id)
@@ -636,6 +646,7 @@ def update_accuracy_test_details(test,field,value):
         r = coll.update_one(query,entity)
     except Exception as e:
         logger.error("Error while updating image collection "+str(e))
+        traceback.print_exc()
         return False
     
     return True
@@ -662,6 +673,7 @@ def insert_imageclassification_accuracytest(creatorID,testboard_snapshot,start_t
         r = coll.insert_one(doc)
     except Exception as e:
         logger.error("Error while inserting image classification accuracy test into db "+str(e))
+        traceback.print_exc()
         return False
 
     return str(r.inserted_id)
@@ -677,6 +689,7 @@ def get_test(testID):
         return details[0]
 
     logger.error("db find returned no results")
+    traceback.print_exc()
     return None
 
 
@@ -693,6 +706,7 @@ def update_test(testID,field,value):
         r = coll.update_one(query,entity)
     except Exception as e:
         logger.error("Error while updating db "+str(e))
+        traceback.print_exc()
         return False
     
     return True
@@ -766,6 +780,7 @@ def insert_api_hit(hit_object):
         r = coll.insert_one(hit_object)
     except Exception as e:
         logger.error("Error while inserting api hit into db "+str(e))
+        traceback.print_exc()
         return False
 
     return str(r.inserted_id)
@@ -798,12 +813,13 @@ def insert_functional_testcase(testboardID,testcase_name,request_data,userID):
             "testboardID":testboardID,
             "testcaseName":testcase_name,
             "requests":request_data,
-            "creatorID":userID
+            "updatedByID":[userID],
             }
     try:
         r = coll.insert_one(doc)
     except Exception as e:
         logger.error("Error while inserting image classification accuracy test into db "+str(e))
+        traceback.print_exc()
         return False
 
     return str(r.inserted_id)
@@ -827,4 +843,39 @@ def list_testcases(testboardID):
     return list(r)
 
 
+
+
+def delete_functional_testcase(testcaseID):
+
+    try:
+        coll = db["testcases"]
+        coll.delete_one({"_id":ObjectId(testcaseID)})
+        return True
+
+    except Exception as e:
+        logger.error(f"Error while deleting testcase {testcaseID}"+str(e))
+        traceback.print_exc()
+        return False
+
+
+def update_functional_testcase(testcaseID,testcaseName,testcaseValues,userID):
+
+    coll = db["testcases"]
+    
+    query = { "_id": ObjectId(testcaseID) }
+    
+    name = { "$set": { "testcaseName" : testcaseName } }
+    values = { "$set": { "requests" : testcaseValues } }
+    updatedByID = { "$push": { "updatedByID" : userID } }
+
+    try:
+        r = coll.update_one(query,name)
+        r = coll.update_one(query,values)
+        r = coll.update_one(query,updatedByID)
+    except Exception as e:
+        logger.error("Error while updating db "+str(e))
+        traceback.print_exc()
+        return False
+    
+    return True
 
