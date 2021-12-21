@@ -879,3 +879,31 @@ def update_functional_testcase(testcaseID,testcaseName,testcaseValues,userID):
     
     return True
 
+
+
+def insert_functionaltest(creatorID,testboard_snapshot,start_time,end_time,
+    total_cases_count,passed_cases_count,failed_cases_count,fail_reasons,test_type,test_status):
+
+
+    coll = db["tests"]
+    doc = {
+            "creatorID":creatorID ,
+            "testboard":testboard_snapshot,
+            "startTime":start_time ,
+            "endTime":end_time ,
+            "testType":test_type ,
+            "testStatus":test_status ,
+            "passedCasesCount":passed_cases_count,
+            "failedCasesCount":failedCasesCount,
+            "totalCasesCount":total_cases_count,
+            "failedReasons":fail_reasons
+        }
+    try:
+        r = coll.insert_one(doc)
+    except Exception as e:
+        logger.error("Error while inserting functional test into db "+str(e))
+        traceback.print_exc()
+        return False
+
+    return str(r.inserted_id)
+

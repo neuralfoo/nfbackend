@@ -13,7 +13,7 @@ import os
 import time
 
 
-public_ip = "http://34.125.24.109"
+public_ip = os.environ['PUBLIC_URL'] #"http://34.125.24.109"
 
 def extract_requests_from_testboard(testboard_details):
 
@@ -140,7 +140,7 @@ def place_variables_in_request_json(request_string,variables):
 	return json.loads(request_string)
 
 
-def api_runner(imageID,request_list):
+def imageclassification_accuracy_api_runner(imageID,request_list):
 
 	input_image_data = dbops.get_image_details(imageID)
 
@@ -280,6 +280,162 @@ def api_runner(imageID,request_list):
 
 	return final_output
 
+
+
+def match_responses(input_req,received_req):
+
+	if input_req == "${ignore-string}$" and type(received_req) == str:
+		return True
+
+	if (input_req == "${ignore-number}$" 
+			and (type(received_req) == float or type(received_req) == int)):
+		return True
+
+	if input_req == "${ignore-array}$" and type(received_req) == list:
+		return True
+
+	if input_req == "${ignore-boolean}$" and type(received_req) == bool:
+		return True
+
+	if input_req == "${ignore-null}$" and type(received_req) == None:
+		return True
+
+	if input_req == "${ignore-object}$" and type(received_req) == dict:
+		return True
+
+	if input_req == "${ignore}$":
+		return True
+
+	if type(input_req) != type(received_req):
+		return False
+
+	if type(input_req) == list and type(received_req) == list:
+
+		for item1,item2 in zip(input_req,received_req):
+
+			r = match_responses(item1,item2)			
+
+			if r == False:
+				return r
+
+	elif type(input_req) == dict and type(received_req) == dict:
+
+		for item1 in input_req.keys():
+
+			if item1 not in received_req:
+				return False
+
+			r = match_responses(input_req[item1],received_req[item2])			
+
+			if r == False:
+				return False
+
+	elif input_req == received_req:
+		return True
+
+	return True
+
+
+
+
+def functional_api_runner(testcase,request_list):
+
+
+	global_variables_dict = {}
+
+	total_response_time = 0.0	
+
+	individual_response_times = []
+
+
+	final_result = True;
+	request_result = {}
+
+	reasons = ""
+
+	i = 1
+	for r in request_list:
+
+		req_values = testcase["requests"][i-1]
+
+		
+
+		headers = convert_headers_to_dict(r["headers"])
+
+		response  = None
+		
+		
+		request_result["requestBody"+str(i)] = req_values["requestBody"]
+
+		input_data = None
+		if r["requestBodyType"] == "json":
+			# input_data = place_variables_in_request_json(r["requestBody"],global_variables_dict)
+
+
+			start_time = time.monotonic()
+
+			response = requests.request(method=r["method"],
+				url=r["endpoint"],
+				json=req_values["requestBody"],
+				headers=headers
+				)
+
+			end_time = time.monotonic()
+
+			diff = round(end_time-start_time,3)
+			total_response_time += diff
+			individual_response_times.append(diff)
+
+			request_result["expectedResponseCode"+str(i)] = req_values["responseCode"]
+			request_result["receivedResponseCode"+str(i)] = str(response.status_code)
+
+			if request_result["expectedResponseCode"+str(i)] == request_result["receivedResponseCode"+str(i)]:
+				final_result = False
+				reasons += "Response code mismatch;"
+
+			request_result["expectedResponseTime"+str(i)] = req_values["responseTime"]
+			request_result["receivedResponseTime"+str(i)] = diff
+
+			if float(request_result["expectedResponseTime"+str(i)]) < float(diff):
+				final_result = False
+				reasons += "Response Time exceeded;"
+
+		if r["responseBodyType"] == "json":
+
+			# print(response.json())
+
+			try:
+				match_result = match_responses(json.loads(req_values["responseBody"]),response.json())
+				
+				request_result["expectedResponseBody"+str(i)] = req_values["responseBody"]
+				request_result["receivedResponseBody"+str(i)] = json.dumps(response.json())
+
+				if match_result == False:
+					final_result = False
+					reasons += "Response Body mismatch;"
+
+			except Exception as e:
+				logger.error(e)
+				traceback.print_exc()
+
+		i+=1
+
+	if final_result == True:
+		reasons += "All good;"
+
+
+	request_result["testcaseName"] = req_values["testcaseName"]
+	request_result["testcaseID"] = str(testcase["_id"])
+	request_result["result"] = final_result
+	request_result["totalResponseTime"] = total_response_time
+	request_result["individualResponseTimes"] = individual_response_times
+	request_result["remarks"] = reasons
+
+
+	# print("global_variables_dict:",global_variables_dict)
+	# print(final_output)
+
+	return request_result
 
 
 

@@ -4,32 +4,14 @@ import os
 import dbops 
 import datetime
 import global_vars as g
-
-def get_snapshot_of_testboard(testboardID):
-
-	testboard_details = dbops.get_testboard(testboardID)
-
-	testboard_details["testboardID"] = str(testboard_details["_id"])
-	del testboard_details["_id"]
-
-
-	requests = []
-	for requestID in testboard_details["apiRequests"]:
-		request = dbops.get_request(requestID)
-		request["requestID"] = str(request["_id"])
-		del request["_id"]
-		requests.append(request)
-
-	testboard_details["requests"] = requests
-
-	return testboard_details
+import utils
 
 
 def imageclassification_accuracy_testcontroller(testboardID,action,creatorID,accuracyTestID=""):
 	
 	if action == "start":
 		
-		testboard_snapshot 	= get_snapshot_of_testboard(testboardID)
+		testboard_snapshot 	= utils.get_snapshot_of_testboard(testboardID)
 		start_time 			= datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
 		end_time 			= None
 		accuracy 			= None
@@ -172,13 +154,3 @@ def list_api_hits(testID,testboardID):
 if __name__=="__main__":
 
 	imageclassification_accuracy_testcontroller("61814c8bfd3f474d4bcc746c","start","6181345602a4b1e18cbe542f")
-
-
-
-
-
-
-
-
-
-

@@ -7,8 +7,8 @@ import testboard
 import user 
 import organization
 import fs 
-import testcontroller 
-import functionaltest
+import accuracy_testcontroller 
+import testcase
 
 app = Flask(__name__)
 
@@ -19,8 +19,8 @@ app.register_blueprint(testboard.profile)
 app.register_blueprint(user.profile)
 app.register_blueprint(organization.profile)
 app.register_blueprint(fs.profile)
-app.register_blueprint(testcontroller.profile)
-app.register_blueprint(functionaltest.profile)
+app.register_blueprint(accuracy_testcontroller.profile)
+app.register_blueprint(testcase.profile)
 
 
 

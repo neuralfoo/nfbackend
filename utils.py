@@ -4,6 +4,26 @@ import dbops
 from loguru import logger
 
 
+def get_snapshot_of_testboard(testboardID):
+
+    testboard_details = dbops.get_testboard(testboardID)
+
+    testboard_details["testboardID"] = str(testboard_details["_id"])
+    del testboard_details["_id"]
+
+
+    request_list = []
+    for requestID in testboard_details["apiRequests"]:
+        request = dbops.get_request(requestID)
+        request["requestID"] = str(request["_id"])
+        del request["_id"]
+        request_list.append(request)
+
+    testboard_details["requests"] = request_list
+
+    return testboard_details
+
+
 def check_ownership(collection,collectionID,userID):
 
     r = dbops.fetch_item_with_projection(collection,["creatorID"],field="_id",value=collectionID)

@@ -42,7 +42,7 @@ if __name__=="__main__":
 
 	for imageID in imageIDs:
 	
-		api_hit_result = api_controller.api_runner(str(imageID["_id"]),request_list)
+		api_hit_result = api_controller.imageclassification_accuracy_api_runner(str(imageID["_id"]),request_list)
 
 		api_hit_result["testID"] = testID
 
