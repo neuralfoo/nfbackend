@@ -82,7 +82,6 @@ def functional_testcontroller_action():
 
 
 
-
 @profile.route("/app/testcontroller/functionaltest/list",methods=["POST"])
 def list_functional_tests():
 
@@ -131,10 +130,10 @@ def list_functional_tests():
 
 
 
-@profile.route("/app/testcontroller/functionaltest/get",methods=["POST"])
+@profile.route("/app/testcontroller/functionaltest/details",methods=["POST"])
 def get_functional_test():
 
-    endpoint = "/app/testcontroller/functionaltest/get"
+    endpoint = "/app/testcontroller/functionaltest/details"
 
     try:
 

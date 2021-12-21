@@ -284,29 +284,40 @@ def imageclassification_accuracy_api_runner(imageID,request_list):
 
 def match_responses(input_req,received_req):
 
+	print(input_req)
+	print(received_req)
+
 	if input_req == "${ignore-string}$" and type(received_req) == str:
+		print(1,True)
 		return True
 
 	if (input_req == "${ignore-number}$" 
 			and (type(received_req) == float or type(received_req) == int)):
+		print(2,True)
 		return True
 
 	if input_req == "${ignore-array}$" and type(received_req) == list:
+		print(3,True)
 		return True
 
 	if input_req == "${ignore-boolean}$" and type(received_req) == bool:
+		print(4,True)
 		return True
 
 	if input_req == "${ignore-null}$" and type(received_req) == None:
+		print(5,True)
 		return True
 
 	if input_req == "${ignore-object}$" and type(received_req) == dict:
+		print(6,True)
 		return True
 
 	if input_req == "${ignore}$":
+		print(7,True)
 		return True
 
 	if type(input_req) != type(received_req):
+		print(8,False)
 		return False
 
 	if type(input_req) == list and type(received_req) == list:
@@ -316,24 +327,34 @@ def match_responses(input_req,received_req):
 			r = match_responses(item1,item2)			
 
 			if r == False:
+				print(9,False)
 				return r
 
+		return True
+		
 	elif type(input_req) == dict and type(received_req) == dict:
 
-		for item1 in input_req.keys():
+		for item in input_req.keys():
 
-			if item1 not in received_req:
+			if item not in received_req:
+				print(10,False)
+				
 				return False
 
-			r = match_responses(input_req[item1],received_req[item2])			
+			r = match_responses(input_req[item],received_req[item])			
 
 			if r == False:
+				print(11,False)
 				return False
 
-	elif input_req == received_req:
 		return True
 
-	return True
+	elif input_req == received_req:
+		print("equal",True)
+		return True
+
+	print("last one ",False)
+	return False
 
 
 
@@ -376,7 +397,7 @@ def functional_api_runner(testcase,request_list):
 
 			response = requests.request(method=r["method"],
 				url=r["endpoint"],
-				json=req_values["requestBody"],
+				json=json.loads(req_values["requestBody"]),
 				headers=headers
 				)
 
@@ -386,10 +407,12 @@ def functional_api_runner(testcase,request_list):
 			total_response_time += diff
 			individual_response_times.append(diff)
 
-			request_result["expectedResponseCode"+str(i)] = req_values["responseCode"]
+			request_result["expectedResponseCode"+str(i)] = str(req_values["responseCode"])
 			request_result["receivedResponseCode"+str(i)] = str(response.status_code)
 
-			if request_result["expectedResponseCode"+str(i)] == request_result["receivedResponseCode"+str(i)]:
+			print(str(response.status_code),str(req_values["responseCode"]))
+
+			if request_result["expectedResponseCode"+str(i)] != request_result["receivedResponseCode"+str(i)]:
 				final_result = False
 				reasons += "Response code mismatch;"
 
@@ -424,7 +447,7 @@ def functional_api_runner(testcase,request_list):
 		reasons += "All good;"
 
 
-	request_result["testcaseName"] = req_values["testcaseName"]
+	request_result["testcaseName"] = testcase["testcaseName"]
 	request_result["testcaseID"] = str(testcase["_id"])
 	request_result["result"] = final_result
 	request_result["totalResponseTime"] = total_response_time

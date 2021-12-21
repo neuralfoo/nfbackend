@@ -43,18 +43,22 @@ if __name__=="__main__":
 
 		dbops.insert_api_hit(api_hit_result)
 
+		if api_hit_result["result"] == True:
+			passed_cases_count += 1
+
+		if api_hit_result["result"] == False:
+			failed_cases_count += 1
+
 		logger.info("api_hit_result")
 		logger.info(api_hit_result)
 
 
-	logger.info(f"Passed test cases: {passed_cases_count}")
-	logger.info(f"Failed test cases: {failed_cases_count}")
-	logger.info(f"Total  test cases: {total_cases_count}")
+		logger.info(f"Passed test cases: {passed_cases_count}")
+		logger.info(f"Failed test cases: {failed_cases_count}")
 
-	dbops.update_test(testID,"passedCasesCount",passed_cases_count)
-	dbops.update_test(testID,"failedCasesCount",failed_cases_count)
-	dbops.update_test(testID,"totalCasesCount",total_cases_count)
-
+		dbops.update_test(testID,"passedCasesCount",passed_cases_count)
+		dbops.update_test(testID,"failedCasesCount",failed_cases_count)
+	
 	end_time = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
 
 	dbops.update_test(testID,"endTime",end_time)
