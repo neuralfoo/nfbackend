@@ -414,14 +414,14 @@ def functional_api_runner(testcase,request_list):
 
 			if request_result["expectedResponseCode"+str(i)] != request_result["receivedResponseCode"+str(i)]:
 				final_result = False
-				reasons += "Response code mismatch;"
+				reasons += "Response code mismatch; "
 
 			request_result["expectedResponseTime"+str(i)] = req_values["responseTime"]
 			request_result["receivedResponseTime"+str(i)] = diff
 
 			if float(request_result["expectedResponseTime"+str(i)]) < float(diff):
 				final_result = False
-				reasons += "Response Time exceeded;"
+				reasons += "Response Time exceeded; "
 
 		if r["responseBodyType"] == "json":
 
@@ -435,7 +435,7 @@ def functional_api_runner(testcase,request_list):
 
 				if match_result == False:
 					final_result = False
-					reasons += "Response Body mismatch;"
+					reasons += "Response Body mismatch; "
 
 			except Exception as e:
 				logger.error(e)
