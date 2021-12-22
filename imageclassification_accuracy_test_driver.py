@@ -105,6 +105,9 @@ if __name__=="__main__":
 
 	dbops.update_test(testID,"endTime",end_time)
 
+	lastrunon = datetime.datetime.now().strftime("%d %b'%y %H:%M:%S")
+	dbops.update_testboard(test_details["testboard"]["testboardID"],"apiLastRunOn",lastrunon)
+
 	dbops.update_test(testID,"testStatus","completed")
 
 

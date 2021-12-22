@@ -236,6 +236,25 @@ def insert_request(testboardID,apiHeader,apiHttpMethod,apiEndpoint,apiRequestBod
     return str(r.inserted_id)
 
 
+def update_testboard(testboardID,field,value):
+
+    coll = db["testboards"]
+    
+    query = { "_id": ObjectId(testboardID) }
+    
+    entity = { "$set": { field : value } }
+
+    try:
+        r = coll.update_one(query,entity)
+    except Exception as e:
+        logger.error("Error while updating db "+str(e))
+        traceback.print_exc()
+        return False
+    
+    return True
+
+
+
 def push_request_in_testboard(testboardID,requestID):
 
     coll = db["testboards"]
