@@ -26,7 +26,7 @@ def imageclassification_accuracy_testcontroller(testboardID,action,creatorID,acc
 			start_time,end_time,num_test_images,
 			test_type,test_status,accuracy,confusion_matrix)
 
-		retval = os.system(f"pm2 start imageclassification_accuracy_test_driver.py --interpreter python3.7 --name {accuracyTestID} --no-autorestart -- {accuracyTestID}")
+		retval = os.system(f"pm2 start imageclassification_accuracy_test_driver.py --interpreter python3.8 --name {accuracyTestID} --no-autorestart -- {accuracyTestID}")
 		# print(retval)
 		return True,"Accuracy test started"
 
