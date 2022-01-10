@@ -16,10 +16,10 @@ def add_testcase(testboardID,testcase_name,requests,userID):
 	return True,"Testcase added"
 
 
-def get_functional_testcases(testboardID):
+def get_testcases(testboardID):
 
 	try:
-		testcases_list = dbops.list_testcases(testboardID)
+		testcases_list = dbops.list_functional_testcases(testboardID)
 
 		for i in range(len(testcases_list)):
 			testcases_list[i]["key"] = i+1

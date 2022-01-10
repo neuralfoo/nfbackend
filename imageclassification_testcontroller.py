@@ -1,19 +1,19 @@
-import utils
-import traceback  
-import global_vars as g 
-from loguru import logger
-from bson.objectid import ObjectId
 from flask import Blueprint,request
-import accuracy_testcontroller_utils as functions
+import imageclassification_testcontroller_utils as functions
+from loguru import logger
+import global_vars as g 
+import traceback  
+import utils
+from bson.objectid import ObjectId
 
 
-profile = Blueprint('accuracy_testcontroller', __name__)
+profile = Blueprint('imageclassification_testcontroller', __name__)
 
 
-@profile.route("/app/testcontroller/accuracytest/action",methods=["POST"])
-def accuracy_testcontroller_action():
+@profile.route("/app/testcontroller/imageclassification/accuracytest/action",methods=["POST"])
+def imageclassification_accuracy_testcontroller():
 
-    endpoint = "/app/testcontroller/accuracytest/action"
+    endpoint = "/app/testcontroller/imageclassification/accuracytest/action"
 
     try:
 
@@ -59,8 +59,8 @@ def accuracy_testcontroller_action():
 
         logger.info(f"Test controller {action} accuracy test attempt: "+str(data) + "by user "+userID)
 
-        authcode = request.headers.get('Authorization')
-        result,msg = functions.accuracy_testcontroller(testboardID,action,userID,authcode,accuracyTestID)
+
+        result,msg = functions.imageclassification_accuracy_testcontroller(testboardID,action,userID,accuracyTestID)
         
         if result == False:
             message = "Unexpected error occurred."
@@ -82,10 +82,10 @@ def accuracy_testcontroller_action():
 
 
 
-@profile.route("/app/testcontroller/accuracytest/list",methods=["POST"])
-def accuracy_testcontroller_list():
+@profile.route("/app/testcontroller/imageclassification/accuracytest/list",methods=["POST"])
+def imageclassification_get_accuracytests_list():
 
-    endpoint = "/app/testcontroller/accuracytest/list"
+    endpoint = "/app/testcontroller/imageclassification/accuracytest/list"
 
     try:
 
@@ -130,8 +130,8 @@ def accuracy_testcontroller_list():
 
 
 
-@profile.route("/app/testcontroller/accuracytest/get",methods=["POST"])
-def accuracy_testcontroller_get():
+@profile.route("/app/testcontroller/imageclassification/accuracytest/get",methods=["POST"])
+def imageclassification_get_accuracytest():
 
     endpoint = "/app/testcontroller/imageclassification/accuracytest/get"
 

@@ -5,7 +5,6 @@ from bson.objectid import ObjectId
 import global_vars as g 
 import api_controller
 import datetime
-import sklearn.metrics as metrics
 
 '''
 parse request
@@ -13,6 +12,7 @@ fetch all test cases
 hit api
 compare response with expected response
 update passed/failed cases
+calculate accuracies
 '''
 
 
@@ -29,15 +29,18 @@ if __name__=="__main__":
 	request_list = api_controller.extract_requests_from_testboard(test_details["testboard"])
 	logger.info(f"Request list generated")
 
-	testcases_list = dbops.list_functional_testcases(test_details["testboard"]["testboardID"])
+	testcases_list = dbops.list_accuracy_testcases(test_details["testboard"]["testboardID"])
 	logger.info(f"Testcases received")
 
 	passed_cases_count = 0
 	failed_cases_count = 0
 
+	accuracy_object = {}
+	average_accuracy = 0
+
 	for testcase in testcases_list:
 	
-		api_hit_result = api_controller.functional_api_runner(testcase,request_list)
+		api_hit_result = api_controller.accuracy_api_runner(testcase,request_list)
 
 		api_hit_result["testID"] = testID
 

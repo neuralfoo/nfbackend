@@ -1,5 +1,5 @@
 from flask import Blueprint,request
-import testcase_utils as functions
+import functional_testcase_utils as functions
 from loguru import logger
 import global_vars as g 
 import traceback  
@@ -8,7 +8,7 @@ from bson.objectid import ObjectId
 
 # import time
 
-profile = Blueprint('testcase', __name__)
+profile = Blueprint('functional_testcase', __name__)
 
 
 @profile.route("/app/testcontroller/functionaltest/testcase/add",methods=["POST"])
@@ -206,7 +206,7 @@ def functional_testcontroller_testcase_delete():
 
 
 @profile.route("/app/testcontroller/functionaltest/testcase/list",methods=["POST"])
-def get_functionaltests_list():
+def functional_testcontroller_testcase_list():
 
     endpoint = "/app/testcontroller/functionaltest/testcase/list"
 
@@ -234,7 +234,7 @@ def get_functionaltests_list():
             logger.error(f"Invalid access rights for {endpoint} by {userID}")
             return utils.return_403_error("You do not have access priviliges for this page.")
 
-        testcase_list,msg = functions.get_functional_testcases(testboardID)
+        testcase_list,msg = functions.get_testcases(testboardID)
         
         if testcase_list is None:
             logger.error(msg)

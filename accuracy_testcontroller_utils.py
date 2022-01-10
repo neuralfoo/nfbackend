@@ -1,42 +1,52 @@
-from loguru import logger
-import traceback 
 import os
-import dbops 
-import datetime
-import global_vars as g
 import utils
+import dbops 
+import json
+import datetime
+import machines
+import requests
+import traceback 
+import global_vars as g
+from loguru import logger
 
 
-def imageclassification_accuracy_testcontroller(testboardID,action,creatorID,accuracyTestID=""):
+def accuracy_testcontroller(testboardID,action,creatorID,authcode,accuracyTestID=""):
 	
 	if action == "start":
 		
 		testboard_snapshot 	= utils.get_snapshot_of_testboard(testboardID)
 		start_time 			= datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
 		end_time 			= None
-		accuracy 			= None
-		confusion_matrix 	= None
+		average_accuracy 	= None
+		all_accuracy		= None
 		test_status 		= "running"
-		test_type 			= "imageclassification_accuracytest"
-		num_test_images 	= len(dbops.get_images_for_testboard(testboardID))
+		test_type 			= "accuracytest"
+		num_test_cases 		= len(dbops.list_accuracy_testcases(testboardID))
+		machineid 			= os.environ['MACHINE_ID']
+		remarks 			= ""
+		passed_cases_count 	= 0
+		failed_cases_count 	= 0
 
-		accuracyTestID = dbops.insert_imageclassification_accuracytest(
-			creatorID,
-			testboard_snapshot,
-			start_time,end_time,num_test_images,
-			test_type,test_status,accuracy,confusion_matrix)
+		accuracyTestID = dbops.insert_accuracytest(
+			creatorID,testboard_snapshot,
+			start_time,end_time,
+			num_test_cases,test_type,test_status,
+			average_accuracy,all_accuracy,
+			passed_cases_count,failed_cases_count
+			machineid,remarks)
 
-		retval = os.system(f"pm2 start imageclassification_accuracy_test_driver.py --interpreter python3.8 --name {accuracyTestID} --no-autorestart -- {accuracyTestID}")
+		retval = os.system(f"pm2 start accuracytest_driver.py --interpreter python3.8 --name {accuracyTestID} --no-autorestart -- {accuracyTestID}")
 		# print(retval)
 		return True,"Accuracy test started"
 
 	elif action == "stop":
-		retval = os.system(f"pm2 delete {accuracyTestID}")
-		# print(retval)
-		dbops.update_test(testID,"testStatus","stopped")
 
-		return True,"Accuracy test stopped"
+		response_code = utils.hit_stop_test_api(accuracyTestID,authcode)
 
+		if response_code == 200:
+			return True,"Accuracy test stopped"
+		else:
+			return True,"Error: unable to stop test"
 
 	return False,"Invalid action"
 
@@ -71,18 +81,6 @@ def get_imageclassification_accuracytests(testboardID):
 		traceback.print_exc()
 		return None,"Error while fetching test list"
 
-
-
-def delete_test(testID):
-
-	try:
-		result = dbops.delete_test(testID)
-		dbops.delete_all_api_hits(testID)	
-		return result,"Test deleted"
-	except Exception as e:
-		logger.error("Error while deleting test.")
-		traceback.print_exc()
-		return False,"Unexpected error, could not delete test."
 
 
 
@@ -125,32 +123,7 @@ def get_imageclassification_accuracytest_details(testID,testboardID):
 
 
 
-def list_api_hits(testID,testboardID):
-
-	try:
-		test_details = dbops.get_test(testID)
-
-		if test_details["testboard"]["testboardID"] != testboardID:
-			return None,"Invalid request"
-
-		hit_list = dbops.list_all_hits(testID)
-
-		for i in range(len(hit_list)):
-			hit_list[i]["key"] = i+1
-			hit_list[i]["hitID"] = str(hit_list[i]["_id"]) 
-			del hit_list[i]["_id"]
-
-			hit_list[i]["totalResponseTime"] = str(hit_list[i]["totalResponseTime"])+"s"
-
-		return hit_list,"success"
-
-	except Exception as e:
-		logger.error("Error while fetching test details")
-		traceback.print_exc()
-		return None,"Error while fetching test details"
 
 
-
-if __name__=="__main__":
-
-	imageclassification_accuracy_testcontroller("61814c8bfd3f474d4bcc746c","start","6181345602a4b1e18cbe542f")
+# if __name__=="__main__":
+# 	imageclassification_accuracy_testcontroller("61814c8bfd3f474d4bcc746c","start","6181345602a4b1e18cbe542f")

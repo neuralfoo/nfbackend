@@ -827,7 +827,7 @@ def update_image_visibility(imageIDs,visibility):
 
 def insert_functional_testcase(testboardID,testcase_name,request_data,userID):
 
-    coll = db["testcases"]
+    coll = db["functional_testcases"]
     doc = {
             "testboardID":testboardID,
             "testcaseName":testcase_name,
@@ -837,7 +837,7 @@ def insert_functional_testcase(testboardID,testcase_name,request_data,userID):
     try:
         r = coll.insert_one(doc)
     except Exception as e:
-        logger.error("Error while inserting image classification accuracy test into db "+str(e))
+        logger.error("Error while inserting accuracy testcase into db "+str(e))
         traceback.print_exc()
         return False
 
@@ -845,17 +845,17 @@ def insert_functional_testcase(testboardID,testcase_name,request_data,userID):
 
 
 
-def list_testcases(testboardID):
+def list_functional_testcases(testboardID):
 
 
-    coll = db["testcases"]
+    coll = db["functional_testcases"]
     
     query = { "testboardID": testboardID }
     
     try:
         r = coll.find(query)
     except Exception as e:
-        logger.error(f"Error while getting testcases attached to testboardID {testboardID} "+str(e))
+        logger.error(f"Error while getting functional testcases attached to testboardID {testboardID} "+str(e))
         traceback.print_exc()
         return []
     
@@ -867,7 +867,7 @@ def list_testcases(testboardID):
 def delete_functional_testcase(testcaseID):
 
     try:
-        coll = db["testcases"]
+        coll = db["functional_testcases"]
         coll.delete_one({"_id":ObjectId(testcaseID)})
         return True
 
@@ -879,7 +879,7 @@ def delete_functional_testcase(testcaseID):
 
 def update_functional_testcase(testcaseID,testcaseName,testcaseValues,userID):
 
-    coll = db["testcases"]
+    coll = db["functional_testcases"]
     
     query = { "_id": ObjectId(testcaseID) }
     
@@ -925,4 +925,119 @@ def insert_functionaltest(creatorID,testboard_snapshot,start_time,end_time,
         return False
 
     return str(r.inserted_id)
+
+
+
+
+
+def insert_accuracy_testcase(testboardID,requestVariables,responseVariables,userID):
+
+    coll = db["accuracy_testcases"]
+    doc = {
+            "testboardID":testboardID,
+            "requestVariables":requestVariables,
+            "responseVariables":responseVariables,
+            "updatedByID":[userID],
+            }
+    try:
+        r = coll.insert_one(doc)
+    except Exception as e:
+        logger.error("Error while inserting accuracy testcase into db "+str(e))
+        traceback.print_exc()
+        return False
+
+    return str(r.inserted_id)
+
+
+
+def list_accuracy_testcases(testboardID):
+
+
+    coll = db["accuracy_testcases"]
+    
+    query = { "testboardID": testboardID }
+    
+    try:
+        r = coll.find(query)
+    except Exception as e:
+        logger.error(f"Error while getting accuracy testcases attached to testboardID {testboardID} "+str(e))
+        traceback.print_exc()
+        return []
+    
+    return list(r)
+
+
+
+def update_accuracy_testcase(testcaseID,responseVariables,requestVariables,userID):
+
+    coll = db["accuracy_testcases"]
+    
+    query = { "_id": ObjectId(testcaseID) }
+    
+    values = { "$set": { "responseVariables" : responseVariables , "requestVariables":requestVariables } }
+    updatedByID = { "$push": { "updatedByID" : userID } }
+
+    try:
+        r = coll.update_one(query,values)
+        r = coll.update_one(query,updatedByID)
+    except Exception as e:
+        logger.error("Error while updating db "+str(e))
+        traceback.print_exc()
+        return False
+    
+    return True
+
+
+
+
+def delete_accuracy_testcase(testcaseID):
+
+    try:
+        coll = db["accuracy_testcases"]
+        coll.delete_one({"_id":ObjectId(testcaseID)})
+        return True
+
+    except Exception as e:
+        logger.error(f"Error while deleting testcase {testcaseID}"+str(e))
+        traceback.print_exc()
+        return False
+
+
+
+
+def insert_accuracytest(creatorID,testboard_snapshot,start_time,end_time,num_test_cases,
+                        test_type,test_status,average_accuracy,all_accuracy,passed_cases_count,
+                        failed_cases_count,machineID,remarks):
+
+
+    coll = db["tests"]
+    doc = {
+            "creatorID":creatorID,
+            "testboard":testboard_snapshot,
+            "startTime":start_time ,
+            "endTime":end_time ,
+            "testType":test_type ,
+            "testStatus":test_status ,
+            "testCasesCount":num_test_cases,
+            "averageAccuracy":average_accuracy,
+            "accuracyObject":all_accuracy,
+            "passedCasesCount":passed_cases_count,
+            "failedCasesCount":failed_cases_count,
+            "machineID":machineID,
+            "remarks":remarks
+        }
+        
+    try:
+        r = coll.insert_one(doc)
+    except Exception as e:
+        logger.error("Error while inserting functional test into db "+str(e))
+        traceback.print_exc()
+        return False
+
+    return str(r.inserted_id)
+
+
+
+
+
 

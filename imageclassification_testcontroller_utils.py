@@ -1,61 +1,56 @@
-from loguru import logger
-import traceback 
 import os
+import utils
 import dbops 
 import datetime
+import traceback 
 import global_vars as g
-import utils
+from loguru import logger
 
 
-
-def functional_test_action(testboardID,action,creatorID,testID=""):
+def imageclassification_accuracy_testcontroller(testboardID,action,creatorID,accuracyTestID=""):
 	
 	if action == "start":
 		
 		testboard_snapshot 	= utils.get_snapshot_of_testboard(testboardID)
 		start_time 			= datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
 		end_time 			= None
-		# accuracy 			= None
-		# confusion_matrix 	= None
-		passed_cases_count	= 0
-		failed_cases_count	= 0
-		total_cases_count	= len(dbops.list_functional_testcases(testboardID))
-		remarks 			= ""
+		accuracy 			= None
+		confusion_matrix 	= None
 		test_status 		= "running"
-		test_type 			= "functionaltest"
+		test_type 			= "imageclassification_accuracytest"
+		num_test_images 	= len(dbops.get_images_for_testboard(testboardID))
 
-		testID = dbops.insert_functionaltest(
+		accuracyTestID = dbops.insert_imageclassification_accuracytest(
 			creatorID,
 			testboard_snapshot,
-			start_time,end_time,
-			total_cases_count,passed_cases_count,failed_cases_count,
-			remarks,test_type,test_status)
+			start_time,end_time,num_test_images,
+			test_type,test_status,accuracy,confusion_matrix)
 
-		retval = os.system(f"pm2 start functionaltest_driver.py --interpreter python3.8 --name {testID} --no-autorestart -- {testID}")
+		retval = os.system(f"pm2 start imageclassification_accuracy_test_driver.py --interpreter python3.8 --name {accuracyTestID} --no-autorestart -- {accuracyTestID}")
 		# print(retval)
-		return True,"Functional test started"
+		return True,"Accuracy test started"
 
 	elif action == "stop":
-		retval = os.system(f"pm2 delete {testID}")
+		retval = os.system(f"pm2 delete {accuracyTestID}")
 		# print(retval)
 		dbops.update_test(testID,"testStatus","stopped")
 
-		return True,"Functional test stopped"
+		return True,"Accuracy test stopped"
 
 
 	return False,"Invalid action"
 
 
-
-def list_functional_tests(testboardID):
+def get_imageclassification_accuracytests(testboardID):
 
 	try:
-		test_list = dbops.list_tests(testboardID,test_type="functionaltest")
+		test_list = dbops.list_tests(testboardID,test_type="imageclassification_accuracytest")
 
 		for i in range(len(test_list)):
 			test_list[i]["key"] = i+1
 			test_list[i]["testID"] = str(test_list[i]["_id"]) 
 			del test_list[i]["_id"]
+
 
 			if type(test_list[i]["endTime"]) == str and type(test_list[i]["startTime"]) == str:
 				end_time = datetime.datetime.strptime(test_list[i]["endTime"],"%d-%m-%Y %H:%M:%S")
@@ -78,7 +73,9 @@ def list_functional_tests(testboardID):
 
 
 
-def get_functional_test_details(testID,testboardID):
+
+
+def get_imageclassification_accuracytest_details(testID,testboardID):
 
 	try:
 		test_details = dbops.get_test(testID)
@@ -116,29 +113,7 @@ def get_functional_test_details(testID,testboardID):
 
 
 
-def list_api_hits(testID,testboardID):
-
-	try:
-		test_details = dbops.get_test(testID)
-
-		if test_details["testboard"]["testboardID"] != testboardID:
-			return None,"Invalid request"
-
-		hit_list = dbops.list_all_hits(testID)
-
-		for i in range(len(hit_list)):
-			hit_list[i]["key"] = i+1
-			hit_list[i]["hitID"] = str(hit_list[i]["_id"]) 
-			del hit_list[i]["_id"]
-
-			hit_list[i]["totalResponseTime"] = str(hit_list[i]["totalResponseTime"])+"s"
-
-		return hit_list,"success"
-
-	except Exception as e:
-		logger.error("Error while fetching test details")
-		traceback.print_exc()
-		return None,"Error while fetching test details"
 
 
-
+# if __name__=="__main__":
+# 	imageclassification_accuracy_testcontroller("61814c8bfd3f474d4bcc746c","start","6181345602a4b1e18cbe542f")

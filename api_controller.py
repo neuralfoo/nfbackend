@@ -22,7 +22,7 @@ def extract_requests_from_testboard(testboard_details):
 	for request_details in testboard_details["requests"]:
 		
 		response_variable_dict = {}
-		response_json = json.loads(request_details["apiResponseBody"])
+		
 
 
 		'''
@@ -30,6 +30,7 @@ def extract_requests_from_testboard(testboard_details):
 		'''
 
 		if request_details["apiResponseBodyType"] == "json":
+			response_json = json.loads(request_details["apiResponseBody"])
 			response_variable_dict = parse_json_template(response_variable_dict,[],response_json)
 			# print("output variables:",response_variable_dict)
 			# exit()
@@ -135,7 +136,7 @@ def place_variables_in_request_json(request_string,variables):
 	for v in variables:
 		m = "${"+v+"}$" in request_string
 		if m:
-			request_string = re.sub("\${"+v+"}\$",variables[v],request_string)
+			request_string = re.sub("\${"+v+"}\$",str(variables[v]).replace("'",'"'),request_string)
 
 	return json.loads(request_string)
 
@@ -461,6 +462,154 @@ def functional_api_runner(testcase,request_list):
 	return request_result
 
 
+
+def accuracy_api_runner(testcase,request_list):
+
+
+	request_result = {}
+
+
+	try:
+		global_input_variables_dict = json.loads(testcase["requestVariables"])
+	except Exception as e:
+		print(e)
+		request_result["testcaseID"] = str(testcase["_id"])
+		request_result["result"] = False
+		request_result["totalResponseTime"] = 0
+		request_result["individualResponseTimes"] = [0]
+		request_result["remarks"] = "Request variables JSON syntax error, could not execute request;"
+		
+		request_result["expectedResponseVariables"] = testcase["responseVariables"]
+		request_result["receivedResponseVariables"] = "{}"
+		# accuracy will be determined based on equality of these two dictionaries
+		
+		request_result["requestVariables"] = testcase["requestVariables"]
+
+
+		for j in range(1,len(request_list)+1):
+			request_result["requestBody"+str(j)] = ""
+			request_result["responseBody"+str(j)] = ""
+			request_result["responseCode"+str(j)] = ""
+
+		return request_result
+
+
+	try:
+		responseVariables = json.loads(testcase["responseVariables"])
+	except Exception as e:
+		print(e)
+		request_result["testcaseID"] = str(testcase["_id"])
+		request_result["result"] = False
+		request_result["totalResponseTime"] = 0
+		request_result["individualResponseTimes"] = [0]
+		request_result["remarks"] = "Response variables JSON syntax error, could not execute request;"
+		
+		request_result["expectedResponseVariables"] = testcase["responseVariables"]
+		request_result["receivedResponseVariables"] = "{}"
+		# accuracy will be determined based on equality of these two dictionaries
+		
+		request_result["requestVariables"] = testcase["requestVariables"]
+
+
+		for j in range(1,len(request_list)+1):
+			request_result["requestBody"+str(j)] = ""
+			request_result["responseBody"+str(j)] = ""
+			request_result["responseCode"+str(j)] = ""
+
+		return request_result
+
+
+	total_response_time = 0.0	
+
+	individual_response_times = []
+
+	global_output_variables_dict = {}
+
+	final_result = True;
+
+	reasons = ""
+
+	i = 1
+	for r in request_list:
+
+		req_values = r
+
+		headers = convert_headers_to_dict(r["headers"])
+
+		response  = None
+		
+		request_body = req_values["requestBody"]
+
+		
+
+		
+		input_data = None
+		if r["requestBodyType"] == "json":
+			# input_data = place_variables_in_request_json(r["requestBody"],global_variables_dict)
+
+			request_body = place_variables_in_request_json(request_body,global_input_variables_dict)
+			request_result["requestBody"+str(i)] = request_body
+
+			start_time = time.monotonic()
+
+			response = requests.request(method=r["method"],
+				url=r["endpoint"],
+				json=json.loads(req_values["requestBody"]),
+				headers=headers
+				)
+
+			end_time = time.monotonic()
+
+			diff = round(end_time-start_time,3)
+			total_response_time += diff
+			individual_response_times.append(diff)
+
+			request_result["responseCode"+str(i)] = str(response.status_code)
+			request_result["responseBody"+str(i)] = str(response.text)
+
+		if r["responseBodyType"] == "json":
+
+			# print(response.json())
+
+			try:
+				output_dict = extract_variables_from_response(r["responseBody"],response.json())
+				
+				# merging incase output of one request needs to be used in the next one.
+				global_input_variables_dict = {**global_input_variables_dict, **output_dict}
+				
+				# merging all final outputs after each request
+				global_output_variables_dict = {**global_output_variables_dict, **output_dict}
+
+			except Exception as e:
+
+				logger.error(e)
+				traceback.print_exc()
+				final_result = False
+				reasons = "Could not parse response; "
+				break;
+			
+
+		i+=1
+
+	if final_result == True:
+		reasons += "All good;"
+
+
+	request_result["testcaseID"] = str(testcase["_id"])
+	request_result["result"] = final_result
+	request_result["totalResponseTime"] = total_response_time
+	request_result["individualResponseTimes"] = individual_response_times
+	request_result["remarks"] = reasons
+
+	request_result["requestVariables"] = testcase["requestVariables"]
+
+	request_result["expectedResponseVariables"] = json.dumps(responseVariables)
+	request_result["receivedResponseVariables"] = json.dumps(global_output_variables_dict)
+
+	# print("global_variables_dict:",global_variables_dict)
+	# print(final_output)
+
+	return request_result
 
 
 # if __name__=="__main__":

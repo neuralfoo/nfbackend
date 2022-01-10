@@ -2,6 +2,36 @@ from flask import Response
 import json
 import dbops
 from loguru import logger
+import global_vars as g
+import json
+import requests
+
+
+def hit_stop_test_api(testID,authcode):
+
+    test_details = dbops.get_test(testID)
+
+    if test_details is None:
+        logger.error("Test does not exist")
+        return 0
+
+    machineid = test_details["machineID"]
+
+    machineip = machines.machine2ip[machineid]
+
+    url = machineip+g.stop_test_url
+
+    payload = json.dumps({
+      "testID": testID
+    })
+    headers = {
+      'Authorization': authcode,
+      'Content-Type': 'application/json'
+    }
+
+    response = requests.request("POST", url, headers=headers, data=payload)
+
+    return int(response.status_code)
 
 
 def get_snapshot_of_testboard(testboardID):
