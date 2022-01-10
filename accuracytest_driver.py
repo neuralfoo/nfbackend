@@ -5,6 +5,8 @@ from bson.objectid import ObjectId
 import global_vars as g 
 import api_controller
 import datetime
+from collections import defaultdict
+import json 
 
 '''
 parse request
@@ -35,7 +37,9 @@ if __name__=="__main__":
 	passed_cases_count = 0
 	failed_cases_count = 0
 
-	accuracy_object = {}
+	correct_occurrence = defaultdict(lambda:0)
+	total_occurrence = defaultdict(lambda:0)
+
 	average_accuracy = 0
 
 	for testcase in testcases_list:
@@ -46,8 +50,22 @@ if __name__=="__main__":
 
 		dbops.insert_api_hit(api_hit_result)
 
+
+		responseVariables = json.loads(api_hit_result["expectedResponseVariables"]) 
+
+		print(responseVariables)
+
+		for key in responseVariables:
+			total_occurrence[key] += 1
+
+
 		if api_hit_result["result"] == True:
 			passed_cases_count += 1
+
+			for key in api_hit_result["accuracy_dict"]:
+
+				correct_occurrence[key] += api_hit_result["accuracy_dict"][key]
+
 
 		if api_hit_result["result"] == False:
 			failed_cases_count += 1
@@ -55,13 +73,27 @@ if __name__=="__main__":
 		logger.info("api_hit_result")
 		logger.info(api_hit_result)
 
-
 		logger.info(f"Passed test cases: {passed_cases_count}")
 		logger.info(f"Failed test cases: {failed_cases_count}")
 
 		dbops.update_test(testID,"passedCasesCount",passed_cases_count)
 		dbops.update_test(testID,"failedCasesCount",failed_cases_count)
-	
+		
+		dbops.update_test(testID,"correctOccurrence",correct_occurrence)
+		dbops.update_test(testID,"totalOccurrence",total_occurrence)
+
+		i = 0
+		total_acc = 0
+		for key in correct_occurrence:
+
+			total_acc += ((correct_occurrence[key]/total_occurrence[key])*100)
+			i += 1
+
+		average_accuracy = total_acc/i
+
+		dbops.update_test(testID,"averageAccuracy",average_accuracy)
+
+
 	end_time = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
 
 	dbops.update_test(testID,"endTime",end_time)

@@ -111,7 +111,7 @@ def accuracy_testcontroller_list():
             logger.error(f"Invalid access rights for {endpoint} by {userID}")
             return utils.return_403_error("You do not have access priviliges for this page.")
 
-        test_list,msg = functions.get_imageclassification_accuracytests(testboardID)
+        test_list,msg = functions.accuracy_testcontroller_list(testboardID)
         
         if test_list is None:
             logger.error(msg)
@@ -130,10 +130,10 @@ def accuracy_testcontroller_list():
 
 
 
-@profile.route("/app/testcontroller/accuracytest/get",methods=["POST"])
-def accuracy_testcontroller_get():
+@profile.route("/app/testcontroller/accuracytest/details",methods=["POST"])
+def accuracy_testcontroller_details():
 
-    endpoint = "/app/testcontroller/imageclassification/accuracytest/get"
+    endpoint = "/app/testcontroller/accuracytest/details"
 
     try:
 
@@ -160,7 +160,7 @@ def accuracy_testcontroller_get():
             logger.error(f"Invalid access rights for {endpoint} by {userID}")
             return utils.return_403_error("You do not have access priviliges for this page.")
 
-        test_details,msg = functions.get_imageclassification_accuracytest_details(testID,testboardID)
+        test_details,msg = functions.accuracy_testcontroller_details(testID,testboardID)
         
         if test_details is None:
             logger.error(msg)

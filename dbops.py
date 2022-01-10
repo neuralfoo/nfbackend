@@ -1006,8 +1006,8 @@ def delete_accuracy_testcase(testcaseID):
 
 
 def insert_accuracytest(creatorID,testboard_snapshot,start_time,end_time,num_test_cases,
-                        test_type,test_status,average_accuracy,all_accuracy,passed_cases_count,
-                        failed_cases_count,machineID,remarks):
+                        test_type,test_status,average_accuracy,correct_occurrence,
+                        total_occurrence,passed_cases_count,failed_cases_count,machineID,remarks):
 
 
     coll = db["tests"]
@@ -1020,13 +1020,14 @@ def insert_accuracytest(creatorID,testboard_snapshot,start_time,end_time,num_tes
             "testStatus":test_status ,
             "testCasesCount":num_test_cases,
             "averageAccuracy":average_accuracy,
-            "accuracyObject":all_accuracy,
+            "correctOccurrence":correct_occurrence,
+            "totalOccurrence":total_occurrence,
             "passedCasesCount":passed_cases_count,
             "failedCasesCount":failed_cases_count,
             "machineID":machineID,
             "remarks":remarks
         }
-        
+
     try:
         r = coll.insert_one(doc)
     except Exception as e:

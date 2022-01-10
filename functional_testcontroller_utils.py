@@ -51,6 +51,7 @@ def list_functional_tests(testboardID):
 
 	try:
 		test_list = dbops.list_tests(testboardID,test_type="functionaltest")
+		test_list.reverse()
 
 		for i in range(len(test_list)):
 			test_list[i]["key"] = i+1
@@ -70,6 +71,7 @@ def list_functional_tests(testboardID):
 				test_list[i]["endTime"] = "-"
 				test_list[i]["duration"] = "-"
 
+		
 		return test_list,"success"
 	except Exception as e:
 		logger.error("Error while fetching test list")

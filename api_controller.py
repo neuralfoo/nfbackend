@@ -548,13 +548,15 @@ def accuracy_api_runner(testcase,request_list):
 			# input_data = place_variables_in_request_json(r["requestBody"],global_variables_dict)
 
 			request_body = place_variables_in_request_json(request_body,global_input_variables_dict)
-			request_result["requestBody"+str(i)] = request_body
+			request_result["requestBody"+str(i)] = json.dumps(request_body)
 
 			start_time = time.monotonic()
 
+			print(request_body)
+
 			response = requests.request(method=r["method"],
 				url=r["endpoint"],
-				json=json.loads(req_values["requestBody"]),
+				json=request_body,
 				headers=headers
 				)
 
@@ -566,6 +568,8 @@ def accuracy_api_runner(testcase,request_list):
 
 			request_result["responseCode"+str(i)] = str(response.status_code)
 			request_result["responseBody"+str(i)] = str(response.text)
+
+			print(response.json())
 
 		if r["responseBodyType"] == "json":
 
@@ -591,9 +595,31 @@ def accuracy_api_runner(testcase,request_list):
 
 		i+=1
 
+	
+
+	accuracy_dict = {}
+
+	for key in responseVariables:
+
+		accuracy_dict[key] = 1
+
+		if key in global_output_variables_dict:
+
+			if global_output_variables_dict[key] != responseVariables[key]:
+
+				final_result = False 
+				reasons += f"Output mismatch for {key}; "
+
+				accuracy_dict[key] = 0
+
+		else:
+			final_result = False 
+			reasons += f"{key} not present in output; "
+			accuracy_dict[key] = 0
+
+
 	if final_result == True:
 		reasons += "All good;"
-
 
 	request_result["testcaseID"] = str(testcase["_id"])
 	request_result["result"] = final_result
@@ -605,6 +631,9 @@ def accuracy_api_runner(testcase,request_list):
 
 	request_result["expectedResponseVariables"] = json.dumps(responseVariables)
 	request_result["receivedResponseVariables"] = json.dumps(global_output_variables_dict)
+
+	request_result["accuracy_dict"] = accuracy_dict
+	
 
 	# print("global_variables_dict:",global_variables_dict)
 	# print(final_output)

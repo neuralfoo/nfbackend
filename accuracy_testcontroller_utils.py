@@ -18,7 +18,8 @@ def accuracy_testcontroller(testboardID,action,creatorID,authcode,accuracyTestID
 		start_time 			= datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
 		end_time 			= None
 		average_accuracy 	= None
-		all_accuracy		= None
+		correct_occurrence 	= {}
+		total_occurrence 	= {}
 		test_status 		= "running"
 		test_type 			= "accuracytest"
 		num_test_cases 		= len(dbops.list_accuracy_testcases(testboardID))
@@ -31,8 +32,8 @@ def accuracy_testcontroller(testboardID,action,creatorID,authcode,accuracyTestID
 			creatorID,testboard_snapshot,
 			start_time,end_time,
 			num_test_cases,test_type,test_status,
-			average_accuracy,all_accuracy,
-			passed_cases_count,failed_cases_count
+			average_accuracy,correct_occurrence,total_occurrence,
+			passed_cases_count,failed_cases_count,
 			machineid,remarks)
 
 		retval = os.system(f"pm2 start accuracytest_driver.py --interpreter python3.8 --name {accuracyTestID} --no-autorestart -- {accuracyTestID}")
@@ -51,10 +52,11 @@ def accuracy_testcontroller(testboardID,action,creatorID,authcode,accuracyTestID
 	return False,"Invalid action"
 
 
-def get_imageclassification_accuracytests(testboardID):
+def accuracy_testcontroller_list(testboardID):
 
 	try:
-		test_list = dbops.list_tests(testboardID,test_type="imageclassification_accuracytest")
+		test_list = dbops.list_tests(testboardID,test_type="accuracytest")
+		test_list.reverse()
 
 		for i in range(len(test_list)):
 			test_list[i]["key"] = i+1
@@ -75,7 +77,9 @@ def get_imageclassification_accuracytests(testboardID):
 				test_list[i]["endTime"] = "-"
 				test_list[i]["duration"] = "-"
 
+
 		return test_list,"success"
+
 	except Exception as e:
 		logger.error("Error while fetching test list")
 		traceback.print_exc()
@@ -85,7 +89,7 @@ def get_imageclassification_accuracytests(testboardID):
 
 
 
-def get_imageclassification_accuracytest_details(testID,testboardID):
+def accuracy_testcontroller_details(testID,testboardID):
 
 	try:
 		test_details = dbops.get_test(testID)
