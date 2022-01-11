@@ -60,8 +60,9 @@ def functional_testcontroller_action():
 
         logger.info(f"Functional test controller {action} attempt: "+str(data) + "by user "+userID)
 
+        authcode = request.headers.get('Authorization')
 
-        result,msg = functions.functional_test_action(testboardID,action,userID,testID)
+        result,msg = functions.functional_test_action(testboardID,action,authcode,testID)
         
         if result == False:
             message = "Unexpected error occurred."

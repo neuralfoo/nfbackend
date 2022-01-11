@@ -8,39 +8,26 @@ import utils
 
 
 
-def functional_test_action(testboardID,action,creatorID,testID=""):
+def functional_test_action(testboardID,action,authcode,testID=""):
 	
+
 	if action == "start":
 		
-		testboard_snapshot 	= utils.get_snapshot_of_testboard(testboardID)
-		start_time 			= datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
-		end_time 			= None
-		# accuracy 			= None
-		# confusion_matrix 	= None
-		passed_cases_count	= 0
-		failed_cases_count	= 0
-		total_cases_count	= len(dbops.list_functional_testcases(testboardID))
-		remarks 			= ""
-		test_status 		= "running"
-		test_type 			= "functionaltest"
+		response_code = utils.hit_start_test_api(testboardID,"functionaltest",authcode)
 
-		testID = dbops.insert_functionaltest(
-			creatorID,
-			testboard_snapshot,
-			start_time,end_time,
-			total_cases_count,passed_cases_count,failed_cases_count,
-			remarks,test_type,test_status)
-
-		retval = os.system(f"pm2 start functionaltest_driver.py --interpreter python3.8 --name {testID} --no-autorestart -- {testID}")
-		# print(retval)
-		return True,"Functional test started"
+		if response_code == 200:
+			return True,"Functional test started"
+		else:
+			return False,"Error: unable to start test"
 
 	elif action == "stop":
-		retval = os.system(f"pm2 delete {testID}")
-		# print(retval)
-		dbops.update_test(testID,"testStatus","stopped")
 
-		return True,"Functional test stopped"
+		response_code = utils.hit_stop_test_api(testboardID,testID,authcode)
+
+		if response_code == 200:
+			return True,"Functional test stopped"
+		else:
+			return False,"Error: unable to stop test"
 
 
 	return False,"Invalid action"

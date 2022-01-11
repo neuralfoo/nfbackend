@@ -15,5 +15,5 @@ api_named_types = {
 testcontroller_actions = ["start","stop"]
 
 
-
-stop_test_url = "/app/testcontroller/test/stop"
+start_test_url 	= "/worker/testcontroller/start"
+stop_test_url 	= "/worker/testcontroller/stop"

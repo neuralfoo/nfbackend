@@ -3,11 +3,35 @@ import json
 import dbops
 from loguru import logger
 import global_vars as g
-import json
 import requests
+import random
+import machines
 
 
-def hit_stop_test_api(testID,authcode):
+def hit_start_test_api(testboardID,testType,authcode):
+
+    # future: use min tests scheduling to get machineid to schedule test on 
+    machineid = random.choice(list(machines.machine2ip.keys()))
+
+    machineip = machines.machine2ip[machineid]
+
+    url = machineip+g.start_test_url
+
+    payload = json.dumps({
+      "testType": testType,
+      "testboardID": testboardID
+    })
+
+    headers = {
+      'Authorization': authcode,
+      'Content-Type': 'application/json'
+    }
+
+    response = requests.request("POST", url, headers=headers, data=payload)
+
+    return int(response.status_code)
+
+def hit_stop_test_api(testboardID,testID,authcode):
 
     test_details = dbops.get_test(testID)
 
@@ -22,7 +46,8 @@ def hit_stop_test_api(testID,authcode):
     url = machineip+g.stop_test_url
 
     payload = json.dumps({
-      "testID": testID
+      "testID": testID,
+      "testboardID": testboardID
     })
     headers = {
       'Authorization': authcode,

@@ -11,32 +11,21 @@ def imageclassification_accuracy_testcontroller(testboardID,action,creatorID,acc
 	
 	if action == "start":
 		
-		testboard_snapshot 	= utils.get_snapshot_of_testboard(testboardID)
-		start_time 			= datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
-		end_time 			= None
-		accuracy 			= None
-		confusion_matrix 	= None
-		test_status 		= "running"
-		test_type 			= "imageclassification_accuracytest"
-		num_test_images 	= len(dbops.get_images_for_testboard(testboardID))
+		response_code = utils.hit_start_test_api(testboardID,"imageclassification_accuracytest",authcode)
 
-		accuracyTestID = dbops.insert_imageclassification_accuracytest(
-			creatorID,
-			testboard_snapshot,
-			start_time,end_time,num_test_images,
-			test_type,test_status,accuracy,confusion_matrix)
-
-		retval = os.system(f"pm2 start imageclassification_accuracy_test_driver.py --interpreter python3.8 --name {accuracyTestID} --no-autorestart -- {accuracyTestID}")
-		# print(retval)
-		return True,"Accuracy test started"
+		if response_code == 200:
+			return True,"Accuracy test started"
+		else:
+			return False,"Error: unable to start test"
 
 	elif action == "stop":
-		retval = os.system(f"pm2 delete {accuracyTestID}")
-		# print(retval)
-		dbops.update_test(testID,"testStatus","stopped")
 
-		return True,"Accuracy test stopped"
+		response_code = utils.hit_stop_test_api(accuracyTestID,authcode)
 
+		if response_code == 200:
+			return True,"Accuracy test stopped"
+		else:
+			return False,"Error: unable to stop test"
 
 	return False,"Invalid action"
 
