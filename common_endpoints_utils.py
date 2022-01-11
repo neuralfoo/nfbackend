@@ -7,9 +7,10 @@ import global_vars as g
 import utils
 
 
-def delete_test(testID):
+def delete_test(testboardID,testID,authcode):
 
 	try:
+		utils.hit_stop_test_api(testboardID,testID,authcode)
 		result = dbops.delete_test(testID)
 		dbops.delete_all_api_hits(testID)	
 		return result,"Test deleted"

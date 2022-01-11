@@ -7,7 +7,7 @@ import global_vars as g
 from loguru import logger
 
 
-def imageclassification_accuracy_testcontroller(testboardID,action,creatorID,accuracyTestID=""):
+def imageclassification_accuracy_testcontroller(testboardID,action,authcode,testID=""):
 	
 	if action == "start":
 		
@@ -20,7 +20,7 @@ def imageclassification_accuracy_testcontroller(testboardID,action,creatorID,acc
 
 	elif action == "stop":
 
-		response_code = utils.hit_stop_test_api(accuracyTestID,authcode)
+		response_code = utils.hit_stop_test_api(testID,authcode)
 
 		if response_code == 200:
 			return True,"Accuracy test stopped"

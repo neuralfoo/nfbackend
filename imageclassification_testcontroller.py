@@ -59,8 +59,8 @@ def imageclassification_accuracy_testcontroller():
 
         logger.info(f"Test controller {action} accuracy test attempt: "+str(data) + "by user "+userID)
 
-
-        result,msg = functions.imageclassification_accuracy_testcontroller(testboardID,action,userID,accuracyTestID)
+        authcode = request.headers.get('Authorization') 
+        result,msg = functions.imageclassification_accuracy_testcontroller(testboardID,action,authcode,accuracyTestID)
         
         if result == False:
             message = "Unexpected error occurred."

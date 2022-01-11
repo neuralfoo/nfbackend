@@ -41,7 +41,9 @@ def delete_test():
             logger.error(f"Invalid access rights for {endpoint} by {userID}")
             return utils.return_403_error("You do not have access priviliges for this page.")
 
-        result,msg = functions.delete_test(testID)
+        authcode = request.headers.get('Authorization') 
+        
+        result,msg = functions.delete_test(testboardID,testID,authcode)
         
         if result == False:
             logger.error(msg)

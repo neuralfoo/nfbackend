@@ -1,3 +1,3 @@
 machine2ip = {
-	"alpha":"localhost"	
+	"alpha":"http://localhost:50001"	
 }
