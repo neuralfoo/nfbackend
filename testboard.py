@@ -193,6 +193,110 @@ def update_testboard():
 
 
 
+
+@profile.route("/app/testboard/settings/get",methods=["POST"])
+def get_settings_testboard():
+
+    endpoint = "/app/testboard/settings/get"
+
+    try:
+
+        userID,organizationID = utils.authenticate(request.headers.get('Authorization'))
+
+        if userID is None:
+            logger.error("Invalid auth token sent for"+endpoint)
+            return utils.return_401_error("Session expired. Please login again.")
+
+        data = request.json
+        
+        if utils.check_params(
+            ["testboardID"],[str],data) == False:
+            message = "Invalid params sent in request body for "+endpoint
+            logger.error(message+":"+str(data))
+            return utils.return_400_error(message)
+
+
+        testboardID = data["testboardID"]
+
+        access_granted,msg = utils.check_permissions("testboards",ObjectId(testboardID),userID)
+        if not access_granted:
+            logger.error(f"Invalid access rights for {endpoint} by {userID}")
+            return utils.return_403_error("You do not have access priviliges for this page.")
+
+        logger.info("Testboard GET settings attempt: "+str(data) + "by user "+userID)
+
+        settings = functions.get_settings_testboard(testboardID)
+        
+        if settings is None:
+            message = "Unexpected error occurred."
+            return utils.return_400_error(message)
+
+        logger.info("Testboard settings fetched")
+
+        return utils.return_200_response({"message":"success","status":200,"settings":settings})    
+
+    except Exception as e:
+
+        message = "Unexpected error"
+        logger.error(message+":"+str(e))
+        traceback.print_exc()
+
+        return utils.return_400_error(message)
+
+
+
+@profile.route("/app/testboard/settings/update",methods=["POST"])
+def update_settings_testboard():
+
+    endpoint = "/app/testboard/settings/update"
+
+    try:
+
+        userID,organizationID = utils.authenticate(request.headers.get('Authorization'))
+
+        if userID is None:
+            logger.error("Invalid auth token sent for"+endpoint)
+            return utils.return_401_error("Session expired. Please login again.")
+
+        data = request.json
+        
+        if utils.check_params(
+            ["testboardID","callbacksEnabled"],[str,bool],data) == False:
+            message = "Invalid params sent in request body for "+endpoint
+            logger.error(message+":"+str(data))
+            return utils.return_400_error(message)
+
+
+        testboardID = data["testboardID"]
+        callbacksEnabled = data["callbacksEnabled"]
+
+        access_granted,msg = utils.check_permissions("testboards",ObjectId(testboardID),userID)
+        if not access_granted:
+            logger.error(f"Invalid access rights for {endpoint} by {userID}")
+            return utils.return_403_error("You do not have access priviliges for this page.")
+
+        logger.info("Testboard UPDATE settings attempt: "+str(data) + "by user "+userID)
+
+        update_result = functions.update_settings_testboard(testboardID,callbacksEnabled)
+        
+        if update_result == False:
+            message = "Unexpected error occurred."
+            return utils.return_400_error(message)
+
+        logger.info("Testboard settings updated")
+
+        return utils.return_200_response({"message":"success","status":200})    
+
+    except Exception as e:
+
+        message = "Unexpected error"
+        logger.error(message+":"+str(e))
+        traceback.print_exc()
+
+        return utils.return_400_error(message)
+
+
+
 @profile.route("/app/testboard/get/<testboardID>",methods=["GET"])
 def get_testboard(testboardID):
 

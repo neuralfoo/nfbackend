@@ -3,7 +3,8 @@ from flask_cors import CORS
 
 import fs 
 import auth 
-import user 
+import user
+import webhook
 import testboard
 import organization
 import common_endpoints
@@ -20,6 +21,7 @@ CORS(app)
 app.register_blueprint(fs.profile)
 app.register_blueprint(auth.profile)
 app.register_blueprint(user.profile)
+app.register_blueprint(webhook.profile)
 app.register_blueprint(testboard.profile)
 app.register_blueprint(organization.profile)
 app.register_blueprint(common_endpoints.profile)

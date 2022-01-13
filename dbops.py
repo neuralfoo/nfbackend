@@ -178,7 +178,7 @@ def validate_token(token):
         return True
     return False
 
-def insert_testboard(apiName,apiType,apiEnvironment,visibility,userID,organizationID):
+def insert_testboard(apiName,apiType,apiEnvironment,visibility,userID,organizationID,callbacksEnabled):
 
     creationTime = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
     
@@ -191,6 +191,7 @@ def insert_testboard(apiName,apiType,apiEnvironment,visibility,userID,organizati
             "apiStatus":"ready",
             "apiLastRunOn":"-",
             "apiRequests":[],
+            "callbacksEnabled":callbacksEnabled,
             "creatorID":userID,
             "organizationID":organizationID,
             "collaboratorIDs":[userID],
@@ -1041,6 +1042,43 @@ def insert_accuracytest(creatorID,testboard_snapshot,start_time,end_time,num_tes
 
 
 
+def insert_webhook_hit(testboardID,testType,data,method,timestamp):
 
 
+    coll = db["webhook_hits"]
+    doc = {
+            "testboardID":testboardID,
+            "testType":testType,
+            "method":method,
+            "data":data,
+            "timestamp":timestamp
+        }
 
+    try:
+        r = coll.insert_one(doc)
+    except Exception as e:
+        logger.error("Error while inserting webhook hit into db "+str(e))
+        traceback.print_exc()
+        return False
+
+    return str(r.inserted_id)
+
+
+def get_testboard_settings(testboardID):
+
+    testboards = db["testboards"]
+    details = testboards.find({"_id":ObjectId(testboardID)},["callbacksEnabled"])
+    details = list(details)
+    if len(details)>0:
+        return details[0]
+
+    logger.error("db find returned no results")
+    traceback.print_exc()
+    return None
+
+
+def update_testboard_settings(testboardID,callbacksEnabled):
+
+    r = update_testboard(testboardID,field="callbacksEnabled",value=callbacksEnabled)
+    
+    return r

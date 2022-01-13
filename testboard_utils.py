@@ -15,13 +15,16 @@ def create_testboard(data,userID,organizationID):
             logger.error(message)
             return "",message
 
+        callbacksEnabled = False
+
         testboard_id = dbops.insert_testboard(
             data["apiName"],
             data["apiType"],
             data["apiEnvironment"],
             data["visibility"],
             userID,
-            organizationID
+            organizationID,
+            callbacksEnabled
         )
 
         for r in data["apiRequests"]:
@@ -241,13 +244,20 @@ def update_testfile_annotation(testboardID,imageID,annotation):
     return r
 
 
+def get_settings_testboard(testboardID):
+
+    settings = dbops.get_testboard_settings(testboardID)
+
+    del settings["_id"]
+
+    return settings
 
 
+def update_settings_testboard(testboardID,callbacksEnabled):
 
+    update_result = dbops.update_testboard_settings(testboardID,callbacksEnabled)
 
-
-
-
+    return update_result
 
 
 
