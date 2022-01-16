@@ -827,14 +827,13 @@ def update_image_visibility(imageIDs,visibility):
 
 
 
-def insert_functional_testcase(testboardID,testcase_name,request_data,userID):
+def insert_functional_testcase(testboardID,testcase_name,request_data):
 
     coll = db["functional_testcases"]
     doc = {
             "testboardID":testboardID,
             "testcaseName":testcase_name,
-            "requests":request_data,
-            "updatedByID":[userID],
+            "requests":request_data
             }
     try:
         r = coll.insert_one(doc)
