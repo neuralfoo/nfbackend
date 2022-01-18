@@ -5,6 +5,8 @@ import global_vars as g
 import traceback  
 import utils
 from bson.objectid import ObjectId
+import fs_utils
+import os 
 
 # import time
 
@@ -49,7 +51,7 @@ def accuracy_testcontroller_testcase_add():
 
         logger.info(f"Test controller add testcase for accuracy test attempt: "+str(data) + "by user "+userID)
 
-        result,msg = functions.add_testcase(testboardID,requestVariables,responseVariables,userID)
+        result,msg = functions.add_testcase(testboardID,requestVariables,responseVariables)
         
         if result == False:
             message = "Unexpected error occurred."
@@ -240,7 +242,70 @@ def accuracy_testcontroller_testcase_list():
 
 
 
+@profile.route("/app/testcontroller/accuracytest/testcase/import",methods=["POST"])
+def accuracy_testcontroller_testcase_import():
 
+    endpoint = "/app/testcontroller/accuracytest/testcase/import"
+
+    try:
+
+        userID,organizationID = utils.authenticate(request.headers.get('Authorization'))
+
+        if userID is None:
+            logger.error("Invalid auth token sent for"+endpoint)
+            return utils.return_401_error("Session expired. Please login again.")
+
+        logger.info(f"Accuracy test cases IMPORT attempt by user {userID}")
+
+        
+        data = dict(request.form)
+
+        if utils.check_params(["testboardID"],[str],data) == False:
+            message = "Invalid params sent in request body for "+endpoint
+            logger.error(message+":"+str(data))
+            return utils.return_400_error(message)
+
+        testboardID = data["testboardID"]
+    
+        access_granted,msg = utils.check_permissions("testboards",ObjectId(testboardID),userID)
+        if not access_granted:
+            logger.error(f"Invalid access rights for {endpoint} by {userID}")
+            return utils.return_403_error("You do not have access priviliges for this page.")
+
+        if 'file' not in request.files:
+            message = "file missing in request"
+            logger.error(message)
+            return utils.return_400_error(message)  
+        
+        file = request.files['file']
+
+        if file.filename.split(".")[-1].lower() != "csv":
+            logger.error("functional testcases import : not a csv file")
+            return utils.return_400_error("Not a CSV file")  
+
+
+        filepath,filename = fs_utils.get_new_filename("./trove/","")
+        file.save(filepath)
+        kind = "csv"
+        newfilepath,newfilename = fs_utils.get_new_filename("./trove/",kind)
+        os.system("mv "+filepath+" "+newfilepath)
+
+        result,msg = functions.import_testcases(testboardID,newfilepath)
+        
+        if result == False:
+            logger.error(msg)
+            return utils.return_400_error(msg)
+
+        return utils.return_200_response({"message":msg,"status":200})
+
+
+    except Exception as e:
+
+        message = "Unexpected error"
+        logger.error(message+":"+str(e))
+        traceback.print_exc()
+
+        return utils.return_400_error(message)
 
 
 

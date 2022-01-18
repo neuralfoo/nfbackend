@@ -932,14 +932,13 @@ def insert_functionaltest(creatorID,testboard_snapshot,start_time,end_time,
 
 
 
-def insert_accuracy_testcase(testboardID,requestVariables,responseVariables,userID):
+def insert_accuracy_testcase(testboardID,requestVariables,responseVariables):
 
     coll = db["accuracy_testcases"]
     doc = {
             "testboardID":testboardID,
             "requestVariables":requestVariables,
             "responseVariables":responseVariables,
-            "updatedByID":[userID],
             }
     try:
         r = coll.insert_one(doc)
