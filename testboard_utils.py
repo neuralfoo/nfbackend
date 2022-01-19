@@ -10,10 +10,10 @@ def create_testboard(data,userID,organizationID):
 
     try:
 
-        if dbops.check_if_exists("testboards","apiName",data["apiName"]):
-            message = "Testboard named '"+data["apiName"]+"' already exists."
-            logger.error(message)
-            return "",message
+        # if dbops.check_if_exists("testboards","apiName",data["apiName"]):
+        #     message = "Testboard named '"+data["apiName"]+"' already exists."
+        #     logger.error(message)
+        #     return "",message
 
         callbacksEnabled = False
 
