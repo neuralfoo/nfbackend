@@ -76,11 +76,11 @@ def import_testcases(testboardID,newfilepath):
 			for i in range(num_requests):
 
 				reqBody = row[(i*4)+1]
-				if type(reqBody) != str or type(reqBody) != float or type(reqBody) != int:
+				if type(reqBody) != str and type(reqBody) != float and type(reqBody) != int:
 					reqBody = ""
 
 				respBody = row[(i*4)+3]
-				if type(respBody) != str or type(respBody) != float or type(respBody) != int:
+				if type(respBody) != str and type(respBody) != float and type(respBody) != int:
 					respBody = ""
 
 				requests.append({
