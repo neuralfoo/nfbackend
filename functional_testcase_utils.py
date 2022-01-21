@@ -85,9 +85,9 @@ def import_testcases(testboardID,newfilepath):
 
 				requests.append({
 					"requestBody"  : str(reqBody),
-					"responseCode" : int(row[(i*4)+2]),
+					"responseCode" : str(row[(i*4)+2]),
 					"responseBody" : str(respBody),
-					"responseTime" : int(row[(i*4)+4]),
+					"responseTime" : str(row[(i*4)+4]),
 				})
 
 			testcase_name = row[0]
