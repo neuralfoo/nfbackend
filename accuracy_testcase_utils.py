@@ -61,6 +61,15 @@ def import_testcases(testboardID,newfilepath):
 		requestVariables = row[0]
 		responseVariables = row[1]
 
+		if type(requestVariables) != str:
+			logger.error("requestVariables are not of type string")
+			continue
+
+		if type(responseVariables) != str:
+			logger.error("responseVariables are not of type string")
+			continue
+
+
 		add_testcase(testboardID,requestVariables,responseVariables)
 
 

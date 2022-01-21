@@ -61,28 +61,48 @@ def import_testcases(testboardID,newfilepath):
 
 	for row in testcases_numpy:
 
-		# logger.info(row)
+		try:
 
-		if (len(row) - 1) % 4 != 0:
-			logger.error("row syntax incorrect")
-			continue
-			
-		num_requests = int((len(row)-1)/4)
+			logger.info(row)
 
-		requests = []
+			if (len(row) - 1) % 4 != 0:
+				logger.error("row syntax incorrect")
+				continue
+				
+			num_requests = int((len(row)-1)/4)
 
-		for i in range(num_requests):
+			requests = []
 
-			requests.append({
-				"requestBody"  : row[(i*4)+1],
-				"responseCode" : int(row[(i*4)+2]),
-				"responseBody" : row[(i*4)+3],
-				"responseTime" : row[(i*4)+4],
-			})
+			for i in range(num_requests):
 
-		testcase_name = row[0]
+				reqBody = row[(i*4)+1]
+				if type(reqBody) != str or type(reqBody) != float or type(reqBody) != int:
+					reqBody = ""
 
-		add_testcase(testboardID,testcase_name,requests)
+				respBody = row[(i*4)+3]
+				if type(respBody) != str or type(respBody) != float or type(respBody) != int:
+					respBody = ""
+
+				requests.append({
+					"requestBody"  : str(reqBody),
+					"responseCode" : int(row[(i*4)+2]),
+					"responseBody" : str(respBody),
+					"responseTime" : int(row[(i*4)+4]),
+				})
+
+			testcase_name = row[0]
+
+			if type(testcase_name) != str:
+				testcase_name =  "<unable to read testcase name>"
+
+			print(testboardID,testcase_name,requests)
+
+			add_testcase(testboardID,testcase_name,requests)
+
+		except Exception as e:
+			traceback.print_exc()
+			logger.error("unable to parse row:")
+			logger.error(row)
 
 	return True, "Successfully imported testcases!"
 
