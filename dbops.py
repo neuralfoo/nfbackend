@@ -5,9 +5,10 @@ import datetime
 from loguru import logger
 from bson.objectid import ObjectId
 import traceback
+import os
 
 # connect=False
-myclient = pymongo.MongoClient("mongodb://localhost:27017/")
+myclient = pymongo.MongoClient(os.environ['MONGO_URL'])
 db = myclient["neuralfoo"]
 
 '''

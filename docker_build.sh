@@ -1,1 +1,1 @@
-sudo docker build -t nf-backend:1 .
+docker build -t nf-backend:1 .

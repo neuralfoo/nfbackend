@@ -1,0 +1,1 @@
+docker run --rm -dt -p 50000:50000 -e ALPHA_URL=http://172.17.0.5:50001 -e MONGO_URL=mongodb://172.17.0.2:27017/ -e PUBLIC_URL=http://localhost:50000 --name nfb nf-backend:1 bash ./startup.sh

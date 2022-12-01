@@ -1,3 +1,5 @@
+import os 
+
 machine2ip = {
-	"alpha":"http://localhost:50001"	
+	"alpha":os.environ['ALPHA_URL']
 }
